@@ -4,7 +4,7 @@
 # This file assumes that the frontend has been built using ./scripts/frontend-build
 
 FROM nginxproxymanager/testca AS testca
-FROM favonia/cloudflare-ddns:1.15.0 AS cloudflare-ddns
+FROM favonia/cloudflare-ddns:1.15.1 AS cloudflare-ddns
 FROM nginxproxymanager/nginx-full:certbot-node
 
 ARG TARGETPLATFORM
