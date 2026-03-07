@@ -1,0 +1,105 @@
+{
+	"type": "object",
+	"description": "Cloudflare DDNS Configuration",
+	"required": ["id"],
+	"additionalProperties": false,
+	"properties": {
+		"id": {
+			"type": "integer",
+			"minimum": 1
+		},
+		"created_on": {
+			"type": "string"
+		},
+		"modified_on": {
+			"type": "string"
+		},
+		"owner_user_id": {
+			"type": "integer",
+			"minimum": 1
+		},
+		"is_deleted": {
+			"type": "boolean"
+		},
+		"enabled": {
+			"type": "boolean"
+		},
+		"name": {
+			"type": "string",
+			"minLength": 0,
+			"maxLength": 255
+		},
+		"cloudflare_api_token": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 500
+		},
+		"domains": {
+			"type": "string",
+			"maxLength": 2048,
+			"description": "Domains with Cloudflare proxy enabled"
+		},
+		"unproxied_domains": {
+			"type": "string",
+			"maxLength": 2048,
+			"description": "Domains without Cloudflare proxy"
+		},
+		"ip4_domains": {
+			"type": "string",
+			"maxLength": 2048
+		},
+		"ip6_domains": {
+			"type": "string",
+			"maxLength": 2048
+		},
+		"ip4_provider": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 255
+		},
+		"ip6_provider": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 255
+		},
+		"update_cron": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 255
+		},
+		"update_on_start": {
+			"type": "boolean"
+		},
+		"delete_on_stop": {
+			"type": "boolean"
+		},
+		"proxied": {
+			"type": "string",
+			"maxLength": 255
+		},
+		"ttl": {
+			"type": "integer",
+			"minimum": 1,
+			"maximum": 86400
+		},
+		"record_comment": {
+			"type": "string",
+			"maxLength": 500
+		},
+		"detection_timeout": {
+			"type": "string",
+			"maxLength": 50
+		},
+		"update_timeout": {
+			"type": "string",
+			"maxLength": 50
+		},
+		"cache_expiration": {
+			"type": "string",
+			"maxLength": 50
+		},
+		"meta": {
+			"type": "object"
+		}
+	}
+}

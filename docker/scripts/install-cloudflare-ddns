@@ -1,0 +1,34 @@
+#!/bin/bash -e
+
+# Note: This script is designed to be run inside a Docker Build for a container
+
+CYAN='\E[1;36m'
+YELLOW='\E[1;33m'
+BLUE='\E[1;34m'
+GREEN='\E[1;32m'
+RESET='\E[0m'
+
+CLOUDFLARE_DDNS_VERSION=1.15.0
+TARGETPLATFORM=${1:-linux/amd64}
+
+# Determine the correct binary file for the architecture given
+case $TARGETPLATFORM in
+	linux/arm64)
+		DDNS_ARCH=linux-arm64
+		;;
+
+	*)
+		DDNS_ARCH=linux-amd64
+		;;
+esac
+
+echo -e "${BLUE}❯ ${CYAN}Installing cloudflare-ddns v${CLOUDFLARE_DDNS_VERSION} for ${YELLOW}${TARGETPLATFORM} (${DDNS_ARCH})${RESET}"
+
+curl -L -o '/tmp/cloudflare-ddns.tar.gz' "https://github.com/favonia/cloudflare-ddns/releases/download/v${CLOUDFLARE_DDNS_VERSION}/cloudflare-ddns_${CLOUDFLARE_DDNS_VERSION}_${DDNS_ARCH}.tar.gz"
+tar -C /tmp -xzf '/tmp/cloudflare-ddns.tar.gz'
+mv /tmp/cloudflare-ddns /usr/local/bin/cloudflare-ddns
+chmod +x /usr/local/bin/cloudflare-ddns
+
+rm -rf '/tmp/cloudflare-ddns.tar.gz'
+
+echo -e "${BLUE}❯ ${GREEN}cloudflare-ddns install Complete${RESET}"

@@ -1,0 +1,44 @@
+{
+	"operationId": "getCloudflareDdns",
+	"summary": "Get a specific Cloudflare DDNS Configuration",
+	"tags": ["cloudflare-ddns"],
+	"security": [
+		{
+			"bearerAuth": [
+				"admin"
+			]
+		}
+	],
+	"parameters": [
+		{
+			"in": "path",
+			"name": "ddnsID",
+			"schema": {
+				"type": "integer",
+				"minimum": 1
+			},
+			"required": true,
+			"description": "DDNS Configuration ID"
+		},
+		{
+			"in": "query",
+			"name": "expand",
+			"description": "Expansions",
+			"schema": {
+				"type": "string"
+			}
+		}
+	],
+	"responses": {
+		"200": {
+			"description": "200 response",
+			"content": {
+				"application/json": {
+					"schema": {
+						"$ref": "../../../components/cloudflare-ddns-object.json"
+					}
+				}
+			}
+		}
+	}
+}

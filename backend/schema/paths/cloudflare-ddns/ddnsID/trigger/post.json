@@ -1,0 +1,54 @@
+{
+	"operationId": "triggerCloudflareDdns",
+	"summary": "Trigger a one-time DDNS update",
+	"tags": ["cloudflare-ddns"],
+	"security": [
+		{
+			"bearerAuth": [
+				"admin"
+			]
+		}
+	],
+	"parameters": [
+		{
+			"in": "path",
+			"name": "ddnsID",
+			"schema": {
+				"type": "integer",
+				"minimum": 1
+			},
+			"required": true,
+			"description": "DDNS Configuration ID"
+		}
+	],
+	"responses": {
+		"200": {
+			"description": "200 response",
+			"content": {
+				"application/json": {
+					"schema": {
+						"type": "object",
+						"properties": {
+							"success": {
+								"type": "boolean",
+								"description": "Whether the update was successful"
+							},
+							"exitCode": {
+								"type": "integer",
+								"description": "Exit code of the update process"
+							},
+							"output": {
+								"type": "string",
+								"description": "Output from the update process"
+							},
+							"error": {
+								"type": "string",
+								"description": "Error message if the update failed"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

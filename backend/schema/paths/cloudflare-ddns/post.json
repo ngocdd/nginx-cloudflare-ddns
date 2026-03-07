@@ -1,0 +1,105 @@
+{
+	"operationId": "createCloudflareDdns",
+	"summary": "Create a Cloudflare DDNS Configuration",
+	"tags": ["cloudflare-ddns"],
+	"security": [
+		{
+			"bearerAuth": [
+				"admin"
+			]
+		}
+	],
+	"requestBody": {
+		"description": "Cloudflare DDNS Configuration Payload",
+		"required": true,
+		"content": {
+			"application/json": {
+				"schema": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": [
+						"cloudflare_api_token"
+					],
+					"properties": {
+						"name": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/name"
+						},
+						"cloudflare_api_token": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/cloudflare_api_token"
+						},
+						"domains": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/domains"
+						},
+						"unproxied_domains": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/unproxied_domains"
+						},
+						"ip4_domains": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/ip4_domains"
+						},
+						"ip6_domains": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/ip6_domains"
+						},
+						"ip4_provider": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/ip4_provider"
+						},
+						"ip6_provider": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/ip6_provider"
+						},
+						"update_cron": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/update_cron"
+						},
+						"update_on_start": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/update_on_start"
+						},
+						"delete_on_stop": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/delete_on_stop"
+						},
+						"proxied": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/proxied"
+						},
+						"ttl": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/ttl"
+						},
+						"record_comment": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/record_comment"
+						},
+						"detection_timeout": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/detection_timeout"
+						},
+						"update_timeout": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/update_timeout"
+						},
+						"cache_expiration": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/cache_expiration"
+						},
+						"meta": {
+							"$ref": "../../components/cloudflare-ddns-object.json#/properties/meta"
+						}
+					}
+				},
+				"example": {
+					"name": "My DDNS Config",
+					"cloudflare_api_token": "your-api-token-here",
+					"domains": "example.com,sub.example.com",
+					"ip4_provider": "cloudflare.trace",
+					"ip6_provider": "cloudflare.trace",
+					"update_cron": "@every 5m",
+					"proxied": "false",
+					"ttl": 1
+				}
+			}
+		}
+	},
+	"responses": {
+		"201": {
+			"description": "201 response",
+			"content": {
+				"application/json": {
+					"schema": {
+						"$ref": "../../components/cloudflare-ddns-object.json"
+					}
+				}
+			}
+		}
+	}
+}
