@@ -191,10 +191,10 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@quobix/vacuum@^0.23.8":
-  version "0.23.8"
-  resolved "https://registry.yarnpkg.com/@quobix/vacuum/-/vacuum-0.23.8.tgz#a994d6db71b483bc34b6683c8c069ef4f26e3e2b"
-  integrity sha512-fdxBgELoyJWabN5yeaQWlu0IREabqlPQb5EgFQjA7Plc1YjUFIXzh4RMFpQ1OJ/D6OtxXY6SeifEAy0HihQ7Qw==
+"@quobix/vacuum@^0.25.0":
+  version "0.25.0"
+  resolved "https://registry.yarnpkg.com/@quobix/vacuum/-/vacuum-0.25.0.tgz#56525d1fbfbb4cd65d0dc39cded6501b21312797"
+  integrity sha512-skIMbkn1iR8Nt03KDdGbnr9D8zKX0K7HIcbA2/KZ2vs7BMyH9kTpL5CXrHlh9JXK89f+wkuc2z294rOnjRl93Q==
   dependencies:
     https-proxy-agent "^7.0.6"
     node-fetch "^3.3.2"
@@ -635,9 +635,9 @@ cypress-wait-until@^3.0.2:
   integrity sha512-iemies796dD5CgjG5kV0MnpEmKSH+s7O83ZoJLVzuVbZmm4lheMsZqAVT73hlMx4QlkwhxbyUzhOBUOZwoOe0w==
 
 cypress@^15.10.0:
-  version "15.10.0"
-  resolved "https://registry.yarnpkg.com/cypress/-/cypress-15.10.0.tgz#06bed98a690fad1b98a21010613f9c8c7fa9f639"
-  integrity sha512-OtUh7OMrfEjKoXydlAD1CfG2BvKxIqgWGY4/RMjrqQ3BKGBo5JFKoYNH+Tpcj4xKxWH4XK0Xri+9y8WkxhYbqQ==
+  version "15.12.0"
+  resolved "https://registry.yarnpkg.com/cypress/-/cypress-15.12.0.tgz#84be43a9d85cb390ca404e5b1d030568a06ab4eb"
+  integrity sha512-B2BRcudLfA4NZZP5QpA45J70bu1heCH59V1yKRLHAtiC49r7RV03X5ifUh7Nfbk8QNg93RAsc6oAmodm/+j0pA==
   dependencies:
     "@cypress/request" "^3.0.10"
     "@cypress/xvfb" "^1.2.4"
@@ -676,9 +676,10 @@ cypress@^15.10.0:
     proxy-from-env "1.0.0"
     request-progress "^3.0.0"
     supports-color "^8.1.1"
-    systeminformation "^5.27.14"
+    systeminformation "^5.31.1"
     tmp "~0.2.4"
     tree-kill "1.2.2"
+    tslib "1.14.1"
     untildify "^4.0.0"
     yauzl "^2.10.0"
 
@@ -844,9 +845,9 @@ eslint-plugin-chai-friendly@^1.1.0:
   integrity sha512-+T1rClpDdXkgBAhC16vRQMI5umiWojVqkj9oUTdpma50+uByCZM/oBfxitZiOkjMRlm725mwFfz/RVgyDRvCKA==
 
 eslint-plugin-cypress@^6.0.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-cypress/-/eslint-plugin-cypress-6.1.0.tgz#5619ceb67d09d74cb5225408bb36c962afb94880"
-  integrity sha512-B8sxtNpINDxFkmsu1qKYjg70VsP8SGneEXgLcZMk1bUZcW08S+JyaiMdof1x6dmt02FgOD7YkT4wOaOD5HotJw==
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-cypress/-/eslint-plugin-cypress-6.2.0.tgz#220992444debed13587a1fb3356e7e952245ac43"
+  integrity sha512-G/8XT9Si0GaqGRVM0sgnRACCI9mbzsC4CisvaaiuJlQoCseKz6C51kq5fcC/yKmwO4dTsWCdhbgaiQtZFGSONg==
   dependencies:
     globals "^17.3.0"
 
@@ -2050,10 +2051,10 @@ supports-color@^8.1.1:
   dependencies:
     has-flag "^4.0.0"
 
-systeminformation@^5.27.14:
-  version "5.31.1"
-  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-5.31.1.tgz#5f88aa1db7470af87b6288baf1738603cafd1c4a"
-  integrity sha512-6pRwxoGeV/roJYpsfcP6tN9mep6pPeCtXbUOCdVa0nme05Brwcwdge/fVNhIZn2wuUitAKZm4IYa7QjnRIa9zA==
+systeminformation@^5.31.1:
+  version "5.31.4"
+  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-5.31.4.tgz#788d80a821d572f4369683c4c61d466d86451fb4"
+  integrity sha512-lZppDyQx91VdS5zJvAyGkmwe+Mq6xY978BDUG2wRkWE+jkmUF5ti8cvOovFQoN5bvSFKCXVkyKEaU5ec3SJiRg==
 
 tar@^7.5.2:
   version "7.5.9"
@@ -2104,6 +2105,11 @@ tree-kill@1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/tree-kill/-/tree-kill-1.2.2.tgz#4ca09a9092c88b73a7cdc5e8a01b507b0790a0cc"
   integrity sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==
+
+tslib@1.14.1:
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
+  integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
 
 tslib@^2.1.0:
   version "2.8.1"
