@@ -77,31 +77,44 @@ export default function Table({ data, isFetching, isFiltered, onEdit, onDelete, 
 				header: intl.formatMessage({ id: "cloudflare-ddns.last-run" }),
 				cell: (info: any) => {
 					const value = info.getValue();
-					const status = value.processStatus;
-					if (status && status.lastRunAt) {
-						const date = new Date(status.lastRunAt);
+					const status = value.processStatus || {};
+					const state = status.state || "never-started";
+
+					// Map state -> badge class + tooltip key
+					const stateMeta: Record<string, { cls: string; labelKey: string }> = {
+						"missing-binary": { cls: "bg-red text-red-fg", labelKey: "cloudflare-ddns.state.missing-binary" },
+						broken: { cls: "bg-red text-red-fg", labelKey: "cloudflare-ddns.state.broken" },
+						"running-ok": { cls: "bg-green text-green-fg", labelKey: "cloudflare-ddns.state.running-ok" },
+						"running-failed": { cls: "bg-red text-red-fg", labelKey: "cloudflare-ddns.state.running-failed" },
+						"running-pending": { cls: "bg-yellow text-yellow-fg", labelKey: "cloudflare-ddns.state.running-pending" },
+						stopped: { cls: "bg-secondary text-secondary-fg", labelKey: "cloudflare-ddns.state.stopped" },
+						"never-started": { cls: "bg-secondary text-secondary-fg", labelKey: "cloudflare-ddns.state.never-started" },
+					};
+					const meta = stateMeta[state] || stateMeta["never-started"];
+
+					const renderTime = (iso: string) => {
+						if (!iso) return null;
+						const date = new Date(iso);
 						const hours = date.getHours().toString().padStart(2, "0");
 						const minutes = date.getMinutes().toString().padStart(2, "0");
 						const day = date.getDate().toString().padStart(2, "0");
 						const month = (date.getMonth() + 1).toString().padStart(2, "0");
 						const year = date.getFullYear();
-						const formattedTime = `${hours}:${minutes} ${day}/${month}/${year}`;
-						return (
-							<span>
-								<span className="text-muted me-2">{formattedTime}</span>
-								{status.lastRunSuccess ? (
-									<span className="badge bg-green text-green-fg">
-										<T id="cloudflare-ddns.last-run.ok" />
-									</span>
-								) : (
-									<span className="badge bg-red text-red-fg">
-										<T id="cloudflare-ddns.last-run.error" />
-									</span>
-								)}
+						return `${hours}:${minutes} ${day}/${month}/${year}`;
+					};
+
+					const lastRunLabel = status.lastRunAt
+						? `${renderTime(status.lastRunAt)}${status.lastTriggerAt ? ` · ${renderTime(status.lastTriggerAt)}` : ""}`
+						: "";
+
+					return (
+						<span className="d-inline-flex align-items-center gap-2">
+							<span className={`badge ${meta.cls}`} title={status.lastError || undefined}>
+								<T id={meta.labelKey} />
 							</span>
-						);
-					}
-					return <span className="text-muted">-</span>;
+							{lastRunLabel ? <span className="text-muted small">{lastRunLabel}</span> : null}
+						</span>
+					);
 				},
 			}),
 			columnHelper.accessor((row: any) => row.enabled, {

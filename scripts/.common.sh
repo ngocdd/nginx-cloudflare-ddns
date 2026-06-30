@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Colors
 BLUE='\E[1;34m'

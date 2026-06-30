@@ -6,7 +6,14 @@ import User from "./user.js";
 
 Model.knex(db());
 
-const boolFields = ["is_deleted", "enabled", "update_on_start", "delete_on_stop"];
+const boolFields = [
+	"is_deleted",
+	"enabled",
+	"update_on_start",
+	"delete_on_stop",
+	"last_run_success",
+	"last_trigger_success",
+];
 
 class CloudflareDdns extends Model {
 	$beforeInsert() {
@@ -25,7 +32,14 @@ class CloudflareDdns extends Model {
 
 	$parseDatabaseJson(json) {
 		const thisJson = super.$parseDatabaseJson(json);
-		return convertIntFieldsToBool(thisJson, boolFields);
+		const converted = convertIntFieldsToBool(thisJson, boolFields);
+		// Never expose the raw API token in API responses. The token is
+		// writeOnly — clients must POST/PUT the value, GET returns empty
+		// so the frontend can detect "no value present" and prompt the user.
+		if ("cloudflare_api_token" in converted) {
+			converted.cloudflare_api_token = "";
+		}
+		return converted;
 	}
 
 	$formatDatabaseJson(json) {

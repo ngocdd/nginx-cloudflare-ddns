@@ -32,7 +32,9 @@
 		"cloudflare_api_token": {
 			"type": "string",
 			"minLength": 1,
-			"maxLength": 500
+			"maxLength": 500,
+			"writeOnly": true,
+			"description": "Cloudflare API token. Write-only — never returned in responses."
 		},
 		"domains": {
 			"type": "string",
@@ -97,6 +99,23 @@
 		"cache_expiration": {
 			"type": "string",
 			"maxLength": 50
+		},
+		"last_run_at": {
+			"type": ["string", "null"],
+			"format": "date-time"
+		},
+		"last_run_success": {
+			"type": "boolean"
+		},
+		"last_trigger_at": {
+			"type": ["string", "null"],
+			"format": "date-time"
+		},
+		"last_trigger_success": {
+			"type": "boolean"
+		},
+		"last_error": {
+			"type": ["string", "null"]
 		},
 		"meta": {
 			"type": "object"

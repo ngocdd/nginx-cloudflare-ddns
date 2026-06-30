@@ -10,7 +10,9 @@
 		"lint": "biome lint",
 		"prettier": "biome format --write .",
 		"validate-schema": "node validate-schema.js",
-		"regenerate-config": "node scripts/regenerate-config"
+		"regenerate-config": "node scripts/regenerate-config",
+		"test": "vitest run",
+		"test:watch": "vitest"
 	},
 	"dependencies": {
 		"@apidevtools/json-schema-ref-parser": "^15.3.1",
@@ -44,7 +46,8 @@
 		"@apidevtools/swagger-parser": "^12.1.0",
 		"@biomejs/biome": "^2.4.3",
 		"chalk": "5.6.2",
-		"nodemon": "^3.1.14"
+		"nodemon": "^3.1.14",
+		"vitest": "^2.1.0"
 	},
 	"signale": {
 		"displayDate": true,

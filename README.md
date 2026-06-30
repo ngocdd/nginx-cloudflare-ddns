@@ -44,7 +44,7 @@ The new Cloudflare DDNS menu allows you to:
 ```yaml
 services:
   npm-ddns:
-    image: ngocdd94/nginx-ddns:latest  # Local image (or ngocdd94/nginx-ddns:latest for Docker Hub)
+    image: ngocdd94/nginx-ddns:latest
     container_name: npm-ddns
     pull_policy: always
     restart: unless-stopped
@@ -55,10 +55,10 @@ services:
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt
-    # environment:
-    #   DB_SQLITE_FILE: "/data/database.sqlite"
-    #   DISABLE_IPV6: "false"
-    #   X_FRAME_OPTIONS: "deny"
+    environment:
+      DB_SQLITE_FILE: "/data/database.sqlite"
+      DISABLE_IPV6: "false"
+      X_FRAME_OPTIONS: "deny"
     healthcheck:
       test: ["CMD", "/usr/bin/check-health"]
       interval: 30s
@@ -221,5 +221,24 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- [GitHub Issues](https://github.com/your-repo/nginx-ddns/issues) - Bug reports and feature requests
-- [Discussions](https://github.com/your-repo/nginx-ddns/discussions) - Questions and community support
+- [GitHub Issues](https://github.com/ngocdd94/nginx-ddns/issues) - Bug reports and feature requests
+- [Discussions](https://github.com/ngocdd94/nginx-ddns/discussions) - Questions and community support
+
+## 🔍 Verifying DDNS at runtime
+
+After the container starts, you can hit the runtime status endpoint to confirm
+each DDNS config is healthy:
+
+```bash
+curl -s -b "your-session-cookie" http://localhost:81/api/cloudflare-ddns/status | jq
+```
+
+A healthy response shows `binary.available: true`, a non-zero `running` count
+when configs are enabled, and an empty `failed` array.
+
+If `binary.available` is `false`, the `cloudflare-ddns` binary is missing from
+the image. Open an issue with the output of:
+
+```bash
+docker exec <container> which cloudflare-ddns
+```

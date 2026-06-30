@@ -462,7 +462,6 @@ const internalProxyHost = {
 		const query = proxyHostModel
 			.query()
 			.where("is_deleted", 0)
-			.groupBy("id")
 			.allowGraph("[owner,access_list,certificate]")
 			.orderBy(castJsonIfNeed("domain_names"), "ASC");
 

@@ -1,7 +1,7 @@
 # Nginx Proxy Manager with Cloudflare DDNS Integration
 # Makefile for building and managing the project
 
-.PHONY: help build build-dev push clean frontend backend install dev dev-stop test lint all release
+.PHONY: help build build-dev push clean frontend backend install dev dev-stop test lint all release bump version
 
 # Variables
 IMAGE_NAME ?= nginx-proxy-manager-ddns
@@ -30,8 +30,8 @@ help: ## Show this help message
 
 install: ## Install all dependencies (frontend + backend)
 	@echo "$(BLUE)❯ Installing dependencies...$(RESET)"
-	@cd frontend && npm install
-	@cd backend && npm install
+	@cd frontend && yarn install --frozen-lockfile
+	@cd backend && yarn install --frozen-lockfile
 	@echo "$(GREEN)✓ Dependencies installed$(RESET)"
 
 frontend: ## Build frontend for production
@@ -174,6 +174,47 @@ clean-docker: ## Remove Docker images
 	@docker rmi $(IMAGE_NAME):$(IMAGE_TAG) 2>/dev/null || true
 	@docker buildx rm "$(BUILDX_NAME)" 2>/dev/null || true
 	@echo "$(GREEN)✓ Docker images removed$(RESET)"
+
+# ============================================================================
+# Versioning
+#
+# .version is the single source of truth for the project version. Both the
+# Dockerfile (`BUILD_VERSION` arg) and `make bump` / `make release` read it.
+# ============================================================================
+
+version: ## Print the current version (from .version)
+	@cat .version
+
+# Bump the version in .version. Usage:
+#   make bump PART=major   # 2.14.0 -> 3.0.0
+#   make bump PART=minor   # 2.14.0 -> 2.15.0
+#   make bump PART=patch   # 2.14.0 -> 2.14.1
+bump:
+	@if [ -z "$(PART)" ]; then \
+		echo "$(RED)ERROR: PART is required (major|minor|patch)$(RESET)" >&2; \
+		exit 1; \
+	fi
+	@CUR=$$(cat .version); \
+	IFS='.' read -r MAJOR MINOR PATCH <<< "$$CUR"; \
+	case "$(PART)" in \
+		major) MAJOR=$$((MAJOR + 1)); MINOR=0; PATCH=0;; \
+		minor) MINOR=$$((MINOR + 1)); PATCH=0;; \
+		patch) PATCH=$$((PATCH + 1));; \
+		*) echo "$(RED)ERROR: PART must be major|minor|patch (got '$(PART)')$(RESET)" >&2; exit 1;; \
+	esac; \
+	NEW="$$MAJOR.$$MINOR.$$PATCH"; \
+	echo "$$NEW" > .version; \
+	echo "$(GREEN)✓ Bumped .version: $$CUR -> $$NEW$(RESET)"
+
+# Build and push a tagged release using the version in .version.
+#   make release           # uses latest tag
+#   make release PART=minor # bumps minor first
+release: bump
+	@VERSION=$$(cat .version); \
+	echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)"; \
+	echo "$(BLUE)  Release $(YELLOW)$$VERSION$(RESET)"; \
+	echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)"; \
+	$(MAKE) push IMAGE_TAG=$$VERSION
 
 # ============================================================================
 # Shortcuts

@@ -4,7 +4,9 @@
 ._*
 .vscode
 certbot-help.txt
-test/node_modules
 */node_modules
+# Yarn is the canonical package manager (see CONTRIBUTING.md).
+# Don't accidentally add npm lock files.
+**/package-lock.json
 docker/dev/dnsrouter-config.json.tmp
 docker/dev/resolv.conf

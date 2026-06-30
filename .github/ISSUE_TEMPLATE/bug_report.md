@@ -9,17 +9,20 @@ assignees: ''
 <!--
  
 Are you in the right place?
-- If you are looking for support on how to get your upstream server forwarding, please consider asking the community on Reddit.
-- If you are writing code changes to contribute and need to ask about the internals of the software, Gitter is the best place to ask.
-- If you think you found a bug with NPM (not Nginx, or your upstream server or MySql) then you are in the *right place.*
+- For DDNS-specific issues (process not starting, API token masking,
+  scheduler, etc.) use the "Cloudflare DDNS issue" template instead.
+- If you think you found a bug with the upstream Nginx Proxy Manager
+  components (Nginx itself, the base UI, certificate issuance) please
+  open the issue at https://github.com/NginxProxyManager/nginx-proxy-manager
+  — this fork only adds the DDNS integration on top.
 
 -->
 
 **Checklist**
-- Have you pulled and found the error with `jc21/nginx-proxy-manager:latest` docker image?
+- Have you pulled and found the error with `ngocdd94/nginx-ddns:<version>` docker image?
   - Yes / No
-- Are you sure you're not using someone else's docker image?
-  - Yes / No
+- Is your issue actually with the Cloudflare DDNS integration? If so, use the "Cloudflare DDNS issue" template instead.
+  - Yes / No / Not sure
 - Have you searched for similar issues (both open and closed)?
   - Yes / No
 

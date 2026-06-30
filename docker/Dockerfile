@@ -1,7 +1,10 @@
 # This is a Dockerfile intended to be built using `docker buildx`
 # for multi-arch support. Building with `docker build` may have unexpected results.
 
-# This file assumes that the frontend has been built using ./scripts/frontend-build
+# IMPORTANT: this file assumes the frontend has been built via `make frontend`.
+# Building this Dockerfile directly without `frontend/dist/index.html` will
+# fail with a clear error (see the sentinel check below). Use the `make build`
+# or `make build-multiarch` targets, which build the frontend first.
 
 FROM nginxproxymanager/testca AS testca
 FROM favonia/cloudflare-ddns:1.15.0 AS cloudflare-ddns
@@ -41,7 +44,11 @@ COPY --from=cloudflare-ddns /bin/ddns /usr/local/bin/cloudflare-ddns
 EXPOSE 80 81 443
 
 COPY backend       /app
+# Frontend dist is built by `make frontend` before `make build`. If you run
+# `docker build` directly without it, fail loudly so the missing build step
+# isn't silently discovered at runtime.
 COPY frontend/dist /app/frontend
+RUN test -f /app/frontend/index.html || (echo "ERROR: frontend/dist is empty or missing. Run 'make frontend' (or 'make build') before 'docker build'." >&2 && false)
 
 WORKDIR /app
 RUN yarn install \

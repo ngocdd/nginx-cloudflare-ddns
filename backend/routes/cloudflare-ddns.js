@@ -1,5 +1,6 @@
 import express from "express";
 import internalCloudflareDdns from "../internal/cloudflare-ddns.js";
+import internalDdnsProcess from "../internal/ddns-process.js";
 import jwtdecode from "../lib/express/jwt-decode.js";
 import apiValidator from "../lib/validator/api.js";
 import validator from "../lib/validator/index.js";
@@ -229,6 +230,50 @@ router
 				id: Number.parseInt(req.params.ddns_id, 10),
 			});
 			res.status(200).send(result);
+		} catch (err) {
+			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
+			next(err);
+		}
+	});
+
+/**
+ * Runtime status of all DDNS configs
+ *
+ * GET /api/cloudflare-ddns/status
+ */
+router
+	.route("/status")
+	.options((_, res) => {
+		res.sendStatus(204);
+	})
+	.all(jwtdecode())
+
+	.get(async (req, res, next) => {
+		try {
+			const statuses = internalDdnsProcess.getAllStatuses();
+			const binary = internalDdnsProcess.getBinaryStatus();
+			const configs = await internalCloudflareDdns.getAll(res.locals.access);
+			const failed = configs
+				.filter((row) => {
+					const s = row.process_status || {};
+					if (!row.enabled) return false;
+					// Anything other than `running-ok` or `running-pending` is a "broken" state
+					return s.state && s.state !== "running-ok" && s.state !== "running-pending";
+				})
+				.map((row) => ({
+					id: row.id,
+					name: row.name,
+					state: row.process_status && row.process_status.state,
+					reason: (row.process_status && row.process_status.lastError) || "not running",
+				}));
+			res.status(200).send({
+				binary,
+				total: configs.length,
+				enabled: configs.filter((r) => r.enabled).length,
+				running: Object.values(statuses).filter((s) => s && s.running).length,
+				failed,
+				statuses,
+			});
 		} catch (err) {
 			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
 			next(err);

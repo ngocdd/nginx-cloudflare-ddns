@@ -18,32 +18,44 @@ interface Props extends InnerModalProps {
 }
 const CloudflareDdnsModal = EasyModal.create(({ id, visible, remove }: Props) => {
 	const { data, isLoading, error } = useCloudflareDdns(id);
-	const { mutate: setCloudflareDdns } = useSetCloudflareDdns();
+	const {
+		mutate: setCloudflareDdns,
+		isPending,
+		error: mutationError,
+	} = useSetCloudflareDdns();
 	const [errorMsg, setErrorMsg] = useState<ReactNode | null>(null);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+	// When editing an existing config, the API masks cloudflare_api_token
+	// (writeOnly). The user must explicitly opt in to update the token.
+	const isEdit = id !== "new";
+	const [updateToken, setUpdateToken] = useState(false);
 
-	const onSubmit = async (values: any, { setSubmitting }: any) => {
-		if (isSubmitting) return;
-		setIsSubmitting(true);
+	const onSubmit = (values: any, { setSubmitting }: any) => {
 		setErrorMsg(null);
 
-		const payload = {
-			id: id === "new" ? undefined : id,
+		const payload: Record<string, unknown> = {
+			id: isEdit ? id : undefined,
 			...values,
 		};
 
-		setCloudflareDdns(payload, {
+		// For edits, only send the token if the user opted in.
+		if (isEdit && !updateToken) {
+			delete payload.cloudflareApiToken;
+		}
+
+		setCloudflareDdns(payload as any, {
 			onError: (err: any) => setErrorMsg(<T id={err.message} />),
 			onSuccess: () => {
 				showObjectSuccess("cloudflare-ddns", "saved");
 				remove();
 			},
-			onSettled: () => {
-				setIsSubmitting(false);
-				setSubmitting(false);
-			},
+			onSettled: () => setSubmitting(false),
 		});
 	};
+
+	// Prefer Formik's isSubmitting (controlled by setSubmitting(false) in onSettled)
+	// but fall back to mutation.isPending so the spinner reflects the actual
+	// in-flight network state.
+	const submitting = isPending;
 
 	return (
 		<Modal show={visible} onHide={remove} size="lg">
@@ -89,8 +101,8 @@ const CloudflareDdnsModal = EasyModal.create(({ id, visible, remove }: Props) =>
 								</Modal.Title>
 							</Modal.Header>
 							<Modal.Body className="p-0">
-								<Alert variant="danger" show={!!errorMsg} onClose={() => setErrorMsg(null)} dismissible>
-									{errorMsg}
+								<Alert variant="danger" show={!!errorMsg || !!mutationError} onClose={() => setErrorMsg(null)} dismissible>
+									{errorMsg || mutationError?.message}
 								</Alert>
 
 								<div className="card m-0 border-0">
@@ -165,24 +177,44 @@ const CloudflareDdnsModal = EasyModal.create(({ id, visible, remove }: Props) =>
 														</div>
 													)}
 												</Field>
-												<Field name="cloudflareApiToken" validate={validateString(1, 500)}>
+												<Field name="cloudflareApiToken" validate={isEdit && !updateToken ? undefined : validateString(1, 500)}>
 													{({ field, form }: any) => (
 														<div className="mb-3">
 															<label className="form-label" htmlFor="cloudflareApiToken">
 																<T id="cloudflare-ddns.api-token" />
-																<span className="text-danger ms-1">*</span>
+																{!isEdit ? <span className="text-danger ms-1">*</span> : null}
 															</label>
 															<input
 																id="cloudflareApiToken"
 																type="password"
 																className={`form-control ${form.errors.cloudflareApiToken && form.touched.cloudflareApiToken ? "is-invalid" : ""}`}
-																required
-																placeholder={intl.formatMessage({ id: "cloudflare-ddns.api-token.placeholder" })}
+																required={!isEdit}
+																disabled={isEdit && !updateToken}
+																placeholder={
+																	isEdit && !updateToken
+																		? "•••••••• (unchanged)"
+																		: intl.formatMessage({ id: "cloudflare-ddns.api-token.placeholder" })
+																}
+																autoComplete="off"
 																{...field}
 															/>
 															{form.errors.cloudflareApiToken && form.touched.cloudflareApiToken ? (
 																<div className="invalid-feedback">
 																	{form.errors.cloudflareApiToken}
+																</div>
+															) : null}
+															{isEdit ? (
+																<div className="form-check mt-2">
+																	<input
+																		id="updateToken"
+																		type="checkbox"
+																		className="form-check-input"
+																		checked={updateToken}
+																		onChange={(e) => setUpdateToken(e.target.checked)}
+																	/>
+																	<label htmlFor="updateToken" className="form-check-label">
+																		<T id="cloudflare-ddns.api-token.replace" />
+																	</label>
 																</div>
 															) : null}
 															<small className="form-hint">
@@ -503,7 +535,7 @@ const CloudflareDdnsModal = EasyModal.create(({ id, visible, remove }: Props) =>
 								</div>
 							</Modal.Body>
 							<Modal.Footer>
-								<Button data-bs-dismiss="modal" onClick={remove} disabled={isSubmitting}>
+								<Button data-bs-dismiss="modal" onClick={remove} disabled={submitting}>
 									<T id="cancel" />
 								</Button>
 								<Button
@@ -511,8 +543,8 @@ const CloudflareDdnsModal = EasyModal.create(({ id, visible, remove }: Props) =>
 									actionType="primary"
 									className="ms-auto"
 									data-bs-dismiss="modal"
-									isLoading={isSubmitting}
-									disabled={isSubmitting}
+									isLoading={submitting}
+									disabled={submitting}
 								>
 									<T id="save" />
 								</Button>

@@ -45,16 +45,23 @@ export default function TableWrapper() {
 			if (result.success) {
 				showSuccess(intl.formatMessage({ id: "cloudflare-ddns.trigger.success" }));
 			} else {
-				showError(intl.formatMessage({ id: "cloudflare-ddns.trigger.failed" }));
+				const detail = result.error ? `: ${result.error}` : "";
+				showError(
+					intl.formatMessage({ id: "cloudflare-ddns.trigger.failed" }) + detail,
+				);
 			}
-		} catch {
-			showError(intl.formatMessage({ id: "cloudflare-ddns.trigger.failed" }));
+		} catch (err) {
+			console.warn("DDNS trigger failed:", err);
+			const detail = err instanceof Error && err.message ? `: ${err.message}` : "";
+			showError(
+				intl.formatMessage({ id: "cloudflare-ddns.trigger.failed" }) + detail,
+			);
 		}
 	};
 
 	let filtered = null;
 	if (search && data) {
-		filtered = data?.filter((item) => {
+		filtered = data.filter((item) => {
 			return (
 				item.name.toLowerCase().includes(search) ||
 				item.domains.toLowerCase().includes(search) ||
@@ -63,8 +70,6 @@ export default function TableWrapper() {
 				item.ip6Domains.toLowerCase().includes(search)
 			);
 		});
-	} else if (search !== "") {
-		setSearch("");
 	}
 
 	return (
