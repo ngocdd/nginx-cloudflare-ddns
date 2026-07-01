@@ -173,6 +173,14 @@
 				}
 			],
 			"example": null
+		},
+		"passwords": {
+			"type": "array",
+			"description": "Per-domain password protection entries",
+			"items": {
+				"$ref": "./proxy-host-password-object.json"
+			},
+			"example": []
 		}
 	}
 }

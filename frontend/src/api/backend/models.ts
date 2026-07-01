@@ -105,6 +105,19 @@ export interface ProxyLocation {
 	forwardPort: number;
 }
 
+export interface ProxyHostPassword {
+	id?: number;
+	createdOn?: string;
+	modifiedOn?: string;
+	proxyHostId?: number;
+	domain: string;
+	username: string;
+	enabled: boolean;
+	hint?: string;
+	password?: string;
+	meta?: Record<string, any>;
+}
+
 export interface ProxyHost {
 	id: number;
 	createdOn: string;
@@ -132,6 +145,7 @@ export interface ProxyHost {
 	owner?: User;
 	accessList?: AccessList;
 	certificate?: Certificate;
+	passwords?: ProxyHostPassword[];
 }
 
 export interface DeadHost {

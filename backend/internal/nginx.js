@@ -147,6 +147,9 @@ const internalNginx = {
 			const renderEngine = utils.getRenderEngine();
 			let renderedLocations = "";
 
+			// Per-domain password file variable name (resolved at runtime via Nginx `map`).
+			const passwordFileVar = `$password_file_${host.id}`;
+
 			const locationRendering = async () => {
 				for (let i = 0; i < host.locations.length; i++) {
 					const locationCopy = Object.assign(
@@ -162,6 +165,7 @@ const internalNginx = {
 						{ hsts_subdomains: host.hsts_subdomains },
 						{ access_list: host.access_list },
 						{ certificate: host.certificate },
+						{ password_file: passwordFileVar },
 						host.locations[i],
 					);
 
@@ -240,6 +244,13 @@ const internalNginx = {
 
 			// Set the IPv6 setting for the host
 			host.ipv6 = internalNginx.ipv6Enabled();
+
+			// Per-domain password protection: expose the password_file variable name
+			// so the proxy_host.conf template can reference it (resolved via Nginx `map`).
+			host.password_file = `$password_file_${host.id}`;
+			// Only render template entries for enabled passwords - disabled rows should not
+			// generate auth_basic blocks or map entries.
+			host.passwords = (host.passwords || []).filter((p) => p && p.enabled);
 
 			locationsPromise.then(() => {
 				renderEngine

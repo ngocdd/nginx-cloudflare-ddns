@@ -7,6 +7,7 @@ import internalAuditLog from "./audit-log.js";
 import internalCertificate from "./certificate.js";
 import internalHost from "./host.js";
 import internalNginx from "./nginx.js";
+import internalProxyHostPassword from "./proxy-host-password.js";
 
 const omissions = () => {
 	return ["is_deleted", "owner.is_deleted"];
@@ -80,7 +81,7 @@ const internalProxyHost = {
 				// re-fetch with cert
 				return internalProxyHost.get(access, {
 					id: row.id,
-					expand: ["certificate", "owner", "access_list.[clients,items]"],
+					expand: ["certificate", "owner", "access_list.[clients,items]", "passwords"],
 				});
 			})
 			.then((row) => {
@@ -88,6 +89,18 @@ const internalProxyHost = {
 				return internalNginx.configure(proxyHostModel, "proxy_host", row).then(() => {
 					return row;
 				});
+			})
+			.then((row) => {
+				// Sync per-domain passwords (if any)
+				if (Array.isArray(thisData.passwords)) {
+					return internalProxyHostPassword
+						.syncAll(access, row.id, thisData.passwords)
+						.then((passwords) => {
+							row.passwords = passwords;
+							return row;
+						});
+				}
+				return row;
 			})
 			.then((row) => {
 				// Audit log
@@ -224,17 +237,26 @@ const internalProxyHost = {
 				return internalProxyHost
 					.get(access, {
 						id: thisData.id,
-						expand: ["owner", "certificate", "access_list.[clients,items]"],
+						expand: ["owner", "certificate", "access_list.[clients,items]", "passwords"],
 					})
 					.then((row) => {
-						if (!row.enabled) {
-							// No need to add nginx config if host is disabled
-							return row;
-						}
-						// Configure nginx
-						return internalNginx.configure(proxyHostModel, "proxy_host", row).then((new_meta) => {
-							row.meta = new_meta;
-							return _.omit(internalHost.cleanRowCertificateMeta(row), omissions());
+						// Sync per-domain passwords (if any)
+						const syncPasswords = Array.isArray(thisData.passwords)
+							? internalProxyHostPassword.syncAll(access, row.id, thisData.passwords).then((passwords) => {
+									row.passwords = passwords;
+								})
+							: Promise.resolve();
+
+						return syncPasswords.then(() => {
+							if (!row.enabled) {
+								// No need to add nginx config if host is disabled
+								return row;
+							}
+							// Configure nginx
+							return internalNginx.configure(proxyHostModel, "proxy_host", row).then((new_meta) => {
+								row.meta = new_meta;
+								return _.omit(internalHost.cleanRowCertificateMeta(row), omissions());
+							});
 						});
 					});
 			})
@@ -277,7 +299,7 @@ const internalProxyHost = {
 					.query()
 					.where("is_deleted", 0)
 					.andWhere("id", thisData.id)
-					.allowGraph("[owner,access_list.[clients,items],certificate]")
+					.allowGraph("[owner,access_list.[clients,items],certificate,passwords]")
 					.first();
 
 				if (access_data.permission_visibility !== "all") {
@@ -326,6 +348,10 @@ const internalProxyHost = {
 					.where("id", row.id)
 					.patch({
 						is_deleted: 1,
+					})
+					.then(() => {
+						// Remove on-disk password state (htpasswd files + page)
+						return internalProxyHostPassword.deleteAll(row.id);
 					})
 					.then(() => {
 						// Delete Nginx Config

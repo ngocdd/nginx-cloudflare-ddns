@@ -1,0 +1,2 @@
+2026/07/01 06:07:22 [error] 205#205: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 127.0.0.1, server: nginxproxymanager, request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "127.0.0.1:81"
+2026/07/01 06:07:27 [error] 206#206: *3 connect() failed (111: Connection refused) while connecting to upstream, client: 127.0.0.1, server: nginxproxymanager, request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "127.0.0.1:81"

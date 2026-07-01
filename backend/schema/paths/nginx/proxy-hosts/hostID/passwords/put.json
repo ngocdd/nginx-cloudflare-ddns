@@ -1,0 +1,60 @@
+{
+	"operationId": "setProxyHostPasswords",
+	"summary": "Bulk-sync per-domain password entries for a Proxy Host",
+	"tags": ["proxy-hosts"],
+	"security": [
+		{
+			"bearerAuth": [
+				"proxy_hosts.manage"
+			]
+		}
+	],
+	"parameters": [
+		{
+			"in": "path",
+			"name": "hostID",
+			"description": "The ID of the Proxy Host",
+			"schema": {
+				"type": "integer",
+				"minimum": 1
+			},
+			"required": true,
+			"example": 2
+		}
+	],
+	"requestBody": {
+		"description": "List of password entries (replaces the entire set)",
+		"required": true,
+		"content": {
+			"application/json": {
+				"schema": {
+					"type": "object",
+					"required": ["passwords"],
+					"properties": {
+						"passwords": {
+							"type": "array",
+							"items": {
+								"$ref": "../../../../components/proxy-host-password-object.json"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"responses": {
+		"200": {
+			"description": "200 response",
+			"content": {
+				"application/json": {
+					"schema": {
+						"type": "array",
+						"items": {
+							"$ref": "../../../../components/proxy-host-password-object.json"
+						}
+					}
+				}
+			}
+		}
+	}
+}

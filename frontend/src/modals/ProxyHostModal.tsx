@@ -13,6 +13,7 @@ import {
 	Loading,
 	LocationsFields,
 	NginxConfigField,
+	PasswordProtectionFields,
 	SSLCertificateField,
 	SSLOptionsFields,
 } from "src/components";
@@ -92,6 +93,14 @@ const ProxyHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
 							// Advanced tab
 							advancedConfig: data?.advancedConfig || "",
 							meta: data?.meta || {},
+							// Password protection (per domain)
+							passwords: (data?.passwords || []).map((p) => ({
+								id: p.id,
+								domain: p.domain,
+								username: p.username || "admin",
+								password: "",
+								enabled: !!p.enabled,
+							})),
 						} as any
 					}
 					onSubmit={onSubmit}
@@ -254,6 +263,10 @@ const ProxyHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
 													</div>
 												</div>
 												<AccessField />
+												<PasswordProtectionFields
+													domainNames={data?.domainNames || []}
+													initialValues={data?.passwords || []}
+												/>
 												<div className="my-3">
 													<h4 className="py-2">
 														<T id="options" />

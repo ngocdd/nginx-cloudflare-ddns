@@ -1,7 +1,7 @@
 # Nginx Proxy Manager with Cloudflare DDNS Integration
 # Makefile for building and managing the project
 
-.PHONY: help build build-dev push clean frontend backend install dev dev-stop test lint all release bump version
+.PHONY: help build build-dev push clean frontend backend install dev dev-stop test lint all release bump version up down restart logs ps pull config
 
 # Variables
 IMAGE_NAME ?= nginx-proxy-manager-ddns
@@ -104,22 +104,51 @@ push-simple: ## Tag and push existing image to Docker Hub (single arch, faster)
 
 # ============================================================================
 # Docker Run
+#
+# `make up` is the canonical entry point for running the production container.
+# It pulls the latest image, recreates the container if needed, and prints
+# the URL + default credentials on success. Optional knobs live in .env
+# (see `.env.example`):
+#
+#   IMAGE_TAG, HTTP_PORT, ADMIN_PORT, HTTPS_PORT,
+#   DISABLE_IPV6, X_FRAME_OPTIONS, ...
 # ============================================================================
 
-run: ## Run the container with docker-compose
-	@echo "$(BLUE)❯ Starting container...$(RESET)"
-	@docker compose up -d
+up: ## Start the container with docker compose (pulls latest image)
+	@echo "$(BLUE)❯ Starting $(DOCKER_HUB_REPO) via docker compose...$(RESET)"
+	@docker compose pull
+	@docker compose up -d --remove-orphans
 	@echo "$(GREEN)✓ Container started$(RESET)"
-	@echo "$(YELLOW)  Admin UI: http://localhost:81$(RESET)"
+	@echo "$(YELLOW)  Admin UI: http://localhost:$${ADMIN_PORT:-81}$(RESET)"
 	@echo "$(YELLOW)  Default login: admin@example.com / changeme$(RESET)"
 
-stop: ## Stop the container
+run: up ## Alias for `make up` (kept for backwards compatibility)
+
+down: ## Stop and remove the container (keeps ./data and ./letsencrypt)
 	@echo "$(BLUE)❯ Stopping container...$(RESET)"
 	@docker compose down
 	@echo "$(GREEN)✓ Container stopped$(RESET)"
 
-logs: ## Show container logs
+stop: down ## Alias for `make down` (kept for backwards compatibility)
+
+restart: ## Restart the container (down + up, keeps image)
+	@echo "$(BLUE)❯ Restarting container...$(RESET)"
+	@docker compose down
+	@docker compose up -d
+	@echo "$(GREEN)✓ Container restarted$(RESET)"
+
+logs: ## Follow container logs
 	@docker compose logs -f
+
+ps: ## List compose-managed containers
+	@docker compose ps
+
+pull: ## Pull the latest image (no container changes)
+	@echo "$(BLUE)❯ Pulling latest image: $(YELLOW)$(DOCKER_HUB_REPO):$(IMAGE_TAG)$(RESET)"
+	@docker compose pull
+
+config: ## Validate and print the resolved docker-compose config
+	@docker compose config
 
 # ============================================================================
 # Development

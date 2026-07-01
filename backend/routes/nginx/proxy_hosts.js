@@ -1,5 +1,6 @@
 import express from "express";
 import internalProxyHost from "../../internal/proxy-host.js";
+import internalProxyHostPassword from "../../internal/proxy-host-password.js";
 import jwtdecode from "../../lib/express/jwt-decode.js";
 import apiValidator from "../../lib/validator/api.js";
 import validator from "../../lib/validator/index.js";
@@ -202,6 +203,59 @@ router
 			res.status(200).send(result);
 		} catch (err) {
 			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
+			next(err);
+		}
+	});
+
+/**
+ * Per-domain password protection
+ *
+ * /api/nginx/proxy-hosts/123/passwords
+ */
+router
+	.route("/:host_id/passwords")
+	.options((_, res) => {
+		res.sendStatus(204);
+	})
+	.all(jwtdecode())
+
+	/**
+	 * GET /api/nginx/proxy-hosts/123/passwords
+	 *
+	 * List password protection entries for a proxy host
+	 */
+	.get(async (req, res, next) => {
+		try {
+			const rows = await internalProxyHostPassword.getAll(
+				res.locals.access,
+				Number.parseInt(req.params.host_id, 10),
+			);
+			res.status(200).send(rows);
+		} catch (err) {
+			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
+			next(err);
+		}
+	})
+
+	/**
+	 * PUT /api/nginx/proxy-hosts/123/passwords
+	 *
+	 * Bulk-sync password protection entries
+	 */
+	.put(async (req, res, next) => {
+		try {
+			const payload = await apiValidator(
+				getValidationSchema("/nginx/proxy-hosts/{hostID}/passwords", "put"),
+				req.body,
+			);
+			const rows = await internalProxyHostPassword.syncAll(
+				res.locals.access,
+				Number.parseInt(req.params.host_id, 10),
+				payload.passwords || [],
+			);
+			res.status(200).send(rows);
+		} catch (err) {
+			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err} ${JSON.stringify(err.debug, null, 2)}`);
 			next(err);
 		}
 	});

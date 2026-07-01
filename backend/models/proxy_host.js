@@ -7,6 +7,7 @@ import { convertBoolFieldsToInt, convertIntFieldsToBool } from "../lib/helpers.j
 import AccessList from "./access_list.js";
 import Certificate from "./certificate.js";
 import now from "./now_helper.js";
+import ProxyHostPassword from "./proxy_host_password.js";
 import User from "./user.js";
 
 Model.knex(db());
@@ -106,6 +107,14 @@ class ProxyHost extends Model {
 				},
 				modify: (qb) => {
 					qb.where("certificate.is_deleted", 0);
+				},
+			},
+			passwords: {
+				relation: Model.HasManyRelation,
+				modelClass: ProxyHostPassword,
+				join: {
+					from: "proxy_host.id",
+					to: "proxy_host_password.proxy_host_id",
 				},
 			},
 		};
