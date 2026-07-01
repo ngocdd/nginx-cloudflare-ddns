@@ -482,6 +482,15 @@
 	"password.show": {
 		"defaultMessage": "Hiện Mật khẩu"
 	},
+	"password-protection": {
+		"defaultMessage": "Bảo vệ bằng mật khẩu"
+	},
+	"password-protection.help": {
+		"defaultMessage": "Bảo vệ từng tên miền bằng tên đăng nhập và mật khẩu. Bật công tắc cho từng tên miền để yêu cầu xác thực cơ bản."
+	},
+	"password-protection.no-domains": {
+		"defaultMessage": "Thêm ít nhất một tên miền để bật bảo vệ bằng mật khẩu."
+	},
 	"permissions.hidden": {
 		"defaultMessage": "Ẩn"
 	},

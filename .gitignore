@@ -10,3 +10,10 @@ certbot-help.txt
 **/package-lock.json
 docker/dev/dnsrouter-config.json.tmp
 docker/dev/resolv.conf
+# Database files
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+# Runtime logs
+data/logs/

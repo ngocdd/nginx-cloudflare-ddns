@@ -755,6 +755,15 @@
 	"password.show": {
 		"defaultMessage": "Show Password"
 	},
+	"password-protection": {
+		"defaultMessage": "Password Protection"
+	},
+	"password-protection.help": {
+		"defaultMessage": "Protect each domain with a username and password. Enable the toggle per domain to require basic auth."
+	},
+	"password-protection.no-domains": {
+		"defaultMessage": "Add at least one domain to enable password protection."
+	},
 	"permissions.hidden": {
 		"defaultMessage": "Hidden"
 	},

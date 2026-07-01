@@ -104,7 +104,7 @@ export function PasswordProtectionFields({ domainNames, initialValues = [], name
 					</div>
 				) : (
 					values.map((item, idx) => (
-						<div className="row align-items-center mb-3" key={item.domain}>
+						<div className="row align-items-center mb-3 g-2" key={item.domain}>
 							<div className="col-3">
 								<input
 									type="text"
@@ -124,7 +124,7 @@ export function PasswordProtectionFields({ domainNames, initialValues = [], name
 									onChange={(e) => handleChange(idx, { username: e.target.value })}
 								/>
 							</div>
-							<div className="col-4">
+							<div className="col-3">
 								<input
 									type="password"
 									autoComplete="new-password"
@@ -134,8 +134,8 @@ export function PasswordProtectionFields({ domainNames, initialValues = [], name
 									onChange={(e) => handleChange(idx, { password: e.target.value })}
 								/>
 							</div>
-							<div className="col-2">
-								<div className="form-check form-switch">
+							<div className="col-1 d-flex justify-content-center">
+								<div className="form-check form-switch m-0">
 									<input
 										className="form-check-input"
 										type="checkbox"
@@ -144,12 +144,17 @@ export function PasswordProtectionFields({ domainNames, initialValues = [], name
 										checked={!!item.enabled}
 										onChange={(e) => handleChange(idx, { enabled: e.target.checked })}
 									/>
-									<label className="form-check-label small" htmlFor={`password-enabled-${idx}`}>
-										<T id={item.enabled ? "enabled" : "disabled"} />
-									</label>
 								</div>
 							</div>
-							<div className="col-1">
+							<div className="col-2">
+								<label
+									className="form-check-label small mb-0"
+									htmlFor={`password-enabled-${idx}`}
+								>
+									<T id={item.enabled ? "enabled" : "disabled"} />
+								</label>
+							</div>
+							<div className="col-1 d-flex justify-content-end">
 								<button
 									type="button"
 									className="btn btn-sm btn-ghost-danger"
