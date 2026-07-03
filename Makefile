@@ -1,7 +1,7 @@
 # Nginx Proxy Manager with Cloudflare DDNS Integration
 # Makefile for building and managing the project
 
-.PHONY: help build build-dev push clean frontend backend install dev dev-stop test lint all release bump version up down restart logs ps pull config
+.PHONY: help build build-dev push clean frontend backend install dev dev-stop test lint all release bump version up down restart logs ps pull config run run-stop run-logs run-status run-clean run-backend run-frontend run-devbe env-local setup-local
 
 # Variables
 IMAGE_NAME ?= nginx-proxy-manager-ddns
@@ -10,7 +10,7 @@ DOCKER_HUB_REPO ?= ngocdd94/nginx-ddns
 BUILD_VERSION ?= $(shell cat .version 2>/dev/null || echo "dev")
 BUILD_COMMIT ?= $(shell git log -n 1 --format=%h 2>/dev/null || echo "unknown")
 BUILD_DATE ?= $(shell date '+%Y-%m-%d %T %Z')
-PLATFORMS ?= linux/amd64,linux/arm64
+PLATFORMS ?= linux/amd64
 BUILDX_NAME ?= npm-ddns
 
 # Colors for output
@@ -122,7 +122,10 @@ up: ## Start the container with docker compose (pulls latest image)
 	@echo "$(YELLOW)  Admin UI: http://localhost:$${ADMIN_PORT:-81}$(RESET)"
 	@echo "$(YELLOW)  Default login: admin@example.com / changeme$(RESET)"
 
-run: up ## Alias for `make up` (kept for backwards compatibility)
+run-docker: up ## Alias for `make up` (kept for backwards compatibility — Docker-based run)
+# NOTE: the canonical `make run` target now runs the app locally without
+# Docker (see "Local (no Docker)" section near the bottom of this file).
+# This target is preserved as `run-docker` for backwards compatibility.
 
 down: ## Stop and remove the container (keeps ./data and ./letsencrypt)
 	@echo "$(BLUE)❯ Stopping container...$(RESET)"
@@ -281,5 +284,169 @@ all: ## Full pipeline: install deps, build FE+BE, build multiarch image, push to
 	@echo "$(GREEN)  Pushed $(DOCKER_HUB_REPO):$(IMAGE_TAG)$(RESET)"
 	@echo "$(GREEN)  Pushed $(DOCKER_HUB_REPO):$(BUILD_VERSION)$(RESET)"
 	@echo "$(GREEN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)"
+
+# ============================================================================
+# Local (no Docker)
+#
+# Runs the app directly on the host without Docker. Two modes are supported:
+#
+#   make run           # Production-like: backend serves API + built frontend
+#                      # assets on a single port (default 3000). Nginx is still
+#                      # needed on the host because the backend shells out to
+#                      # `nginx`, `certbot`, `logrotate`, `openssl`.
+#
+#   make run-devbe     # Dev: backend on 3000 + Vite dev server on 5173 with
+#                      # HMR. Best iteration speed while editing frontend.
+#
+# Both modes share state under ./data (SQLite DB, JWT keys, generated nginx
+# config, letsencrypt). To wipe state, run `make run-clean`.
+#
+# Required host binaries:
+#   node (>=18), yarn (or npm), nginx, certbot, openssl, logrotate
+#
+# Environment variables (override defaults via env or `.env`):
+#   BACKEND_PORT  (default 3000)         — port backend listens on
+#   FRONTEND_PORT (default 5173)         — port vite dev server (run-devbe only)
+#   DB_SQLITE_FILE (default ./data/database.sqlite)
+#   INITIAL_ADMIN_EMAIL / INITIAL_ADMIN_PASSWORD  — create first admin on
+#                                                    empty DB
+# ============================================================================
+
+# Track child PIDs so make run-stop can kill them cleanly
+RUN_BACKEND_PID_FILE := .run/backend.pid
+RUN_FRONTEND_PID_FILE := .run/frontend.pid
+
+BACKEND_PORT ?= 3000
+FRONTEND_PORT ?= 5173
+DB_SQLITE_FILE ?= $(CURDIR)/data/database.sqlite
+
+env-local: ## Print resolved local-run environment
+	@echo "BACKEND_PORT=$(BACKEND_PORT)"
+	@echo "FRONTEND_PORT=$(FRONTEND_PORT)"
+	@echo "DB_SQLITE_FILE=$(DB_SQLITE_FILE)"
+
+setup-local: install ## Prepare directories and config for local runs
+	@echo "$(BLUE)❯ Preparing local runtime directories...$(RESET)"
+	@mkdir -p data/nginx/proxy_host data/nginx/redirection_host \
+		data/nginx/dead_host data/nginx/stream data/nginx/temp \
+		data/nginx/default_host data/nginx/default_www \
+		data/access data/logs data/custom_ssl \
+		data/letsencrypt-acme-challenge data/proxy_host_passwords \
+		letsencrypt .run
+	@if [ ! -f data/keys.json ]; then \
+		echo "$(BLUE)❯ Generating JWT key pair (data/keys.json)...$(RESET)"; \
+		node backend/scripts/generate-keys.js; \
+	else \
+		echo "$(GREEN)✓ JWT keys already present$(RESET)"; \
+	fi
+	@echo "$(GREEN)✓ Local environment ready$(RESET)"
+
+run-frontend: setup-local ## Build frontend for production-style local serving
+	@echo "$(BLUE)❯ Building frontend assets (production mode)...$(RESET)"
+	@cd frontend && yarn locale-compile
+	@cd frontend && yarn build
+	@echo "$(GREEN)✓ Frontend built into frontend/dist$(RESET)"
+
+run-backend: setup-local ## Start backend in foreground (Ctrl-C to stop)
+	@echo "$(BLUE)❯ Starting backend on port $(BACKEND_PORT)...$(RESET)"
+	@cd backend && \
+		DB_SQLITE_FILE="$(DB_SQLITE_FILE)" \
+		BACKEND_PORT="$(BACKEND_PORT)" \
+		NODE_ENV=development \
+		$(if $(INITIAL_ADMIN_EMAIL),INITIAL_ADMIN_EMAIL='$(INITIAL_ADMIN_EMAIL)') \
+		$(if $(INITIAL_ADMIN_PASSWORD),INITIAL_ADMIN_PASSWORD='$(INITIAL_ADMIN_PASSWORD)') \
+		node index.js
+
+# Production-style local run: backend serves the built SPA + API on one port.
+# Usage: make run [BACKEND_PORT=3000]
+run: run-frontend ## Run backend + built frontend locally (no Docker)
+	@echo "$(BLUE)❯ Starting nginx-ddns locally (no Docker)...$(RESET)"
+	@mkdir -p .run
+	@cd backend && \
+		DB_SQLITE_FILE="$(DB_SQLITE_FILE)" \
+		BACKEND_PORT="$(BACKEND_PORT)" \
+		NODE_ENV=development \
+		$(if $(INITIAL_ADMIN_EMAIL),INITIAL_ADMIN_EMAIL='$(INITIAL_ADMIN_EMAIL)') \
+		$(if $(INITIAL_ADMIN_PASSWORD),INITIAL_ADMIN_PASSWORD='$(INITIAL_ADMIN_PASSWORD)') \
+		nohup node index.js > ../.run/backend.log 2>&1 & \
+		echo $$! > ../$(RUN_BACKEND_PID_FILE)
+	@sleep 2
+	@if kill -0 $$(cat $(RUN_BACKEND_PID_FILE)) 2>/dev/null; then \
+		echo "$(GREEN)✓ Backend started (PID $$(cat $(RUN_BACKEND_PID_FILE)))$(RESET)"; \
+		echo "$(YELLOW)  App:    http://localhost:$(BACKEND_PORT)$(RESET)"; \
+		echo "$(YELLOW)  API:    http://localhost:$(BACKEND_PORT)/api$(RESET)"; \
+		echo "$(YELLOW)  Logs:   tail -f .run/backend.log$(RESET)"; \
+		echo "$(YELLOW)  Stop:   make run-stop$(RESET)"; \
+	else \
+		echo "$(RED)✗ Backend failed to start. Check .run/backend.log$(RESET)"; \
+		tail -n 40 .run/backend.log; \
+		exit 1; \
+	fi
+
+run-stop: ## Stop the local backend started by `make run`
+	@echo "$(BLUE)❯ Stopping local backend...$(RESET)"
+	@if [ -f $(RUN_BACKEND_PID_FILE) ]; then \
+		PID=$$(cat $(RUN_BACKEND_PID_FILE)); \
+		if kill -0 $$PID 2>/dev/null; then \
+			kill $$PID; \
+			sleep 1; \
+			kill -9 $$PID 2>/dev/null || true; \
+			echo "$(GREEN)✓ Stopped backend (PID $$PID)$(RESET)"; \
+		else \
+			echo "$(YELLOW)  Backend PID $$PID not running$(RESET)"; \
+		fi; \
+		rm -f $(RUN_BACKEND_PID_FILE); \
+	else \
+		echo "$(YELLOW)  No PID file found — nothing to stop$(RESET)"; \
+	fi
+
+run-logs: ## Tail the local backend log
+	@if [ -f .run/backend.log ]; then \
+		tail -f .run/backend.log; \
+	else \
+		echo "$(RED)No log file at .run/backend.log — is the backend running?$(RESET)"; \
+	fi
+
+run-status: ## Show status of locally-run processes
+	@echo "$(BLUE)Local processes:$(RESET)"
+	@if [ -f $(RUN_BACKEND_PID_FILE) ] && kill -0 $$(cat $(RUN_BACKEND_PID_FILE)) 2>/dev/null; then \
+		echo "  backend  running  PID $$(cat $(RUN_BACKEND_PID_FILE))  http://localhost:$(BACKEND_PORT)"; \
+	else \
+		echo "  backend  stopped"; \
+	fi
+	@if [ -f $(RUN_FRONTEND_PID_FILE) ] && kill -0 $$(cat $(RUN_FRONTEND_PID_FILE)) 2>/dev/null; then \
+		echo "  frontend running  PID $$(cat $(RUN_FRONTEND_PID_FILE))  http://localhost:$(FRONTEND_PORT)"; \
+	else \
+		echo "  frontend stopped"; \
+	fi
+
+run-clean: ## Wipe local runtime state (DB, JWT keys, generated configs, logs, PIDs)
+	@echo "$(BLUE)❯ Cleaning local runtime state...$(RESET)"
+	@$(MAKE) -s run-stop || true
+	@rm -rf data/database.sqlite data/keys.json .run
+	@echo "$(GREEN)✓ Local state cleaned$(RESET)"
+
+# Dev-style local run: backend (3000) + Vite dev server (5173) with HMR.
+# Usage: make run-devbe
+run-devbe: setup-local ## Run backend + Vite dev server for active development
+	@echo "$(BLUE)❯ Starting backend + Vite dev server (no Docker)...$(RESET)"
+	@mkdir -p .run
+	@cd backend && \
+		DB_SQLITE_FILE="$(DB_SQLITE_FILE)" \
+		BACKEND_PORT="$(BACKEND_PORT)" \
+		NODE_ENV=development \
+		$(if $(INITIAL_ADMIN_EMAIL),INITIAL_ADMIN_EMAIL='$(INITIAL_ADMIN_EMAIL)') \
+		$(if $(INITIAL_ADMIN_PASSWORD),INITIAL_ADMIN_PASSWORD='$(INITIAL_ADMIN_PASSWORD)') \
+		nohup node index.js > ../.run/backend.log 2>&1 & \
+		echo $$! > ../$(RUN_BACKEND_PID_FILE)
+	@cd frontend && \
+		nohup yarn dev --port $(FRONTEND_PORT) > ../.run/frontend.log 2>&1 & \
+		echo $$! > ../$(RUN_FRONTEND_PID_FILE)
+	@sleep 3
+	@echo "$(GREEN)✓ Both processes started$(RESET)"
+	@echo "$(YELLOW)  Backend:  http://localhost:$(BACKEND_PORT)$(RESET)"
+	@echo "$(YELLOW)  Frontend: http://localhost:$(FRONTEND_PORT) (Vite dev / HMR)$(RESET)"
+	@echo "$(YELLOW)  Logs:     make run-logs (backend) / tail -f .run/frontend.log$(RESET)"
+	@echo "$(YELLOW)  Stop:     make run-stop (kills both)$(RESET)"
 
 .DEFAULT_GOAL := help
