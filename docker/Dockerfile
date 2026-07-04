@@ -7,7 +7,7 @@
 # or `make build-multiarch` targets, which build the frontend first.
 
 FROM nginxproxymanager/testca AS testca
-FROM favonia/cloudflare-ddns:1.15.0 AS cloudflare-ddns
+FROM favonia/cloudflare-ddns:1.15.1 AS cloudflare-ddns
 FROM nginxproxymanager/nginx-full:certbot-node
 
 ARG TARGETPLATFORM
