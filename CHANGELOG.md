@@ -8,64 +8,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- New `GET /api/cloudflare-ddns/status` endpoint exposing binary availability,
-  per-config runtime state, and a list of broken configs (`backend/routes/cloudflare-ddns.js`).
-- Per-row runtime state columns (`last_run_at`, `last_run_success`,
-  `last_trigger_at`, `last_trigger_success`, `last_error`) on `cloudflare_ddns`,
-  persisted by `ddns-process.js` so the UI survives backend restarts.
-- Derived `processStatus.state` field with values:
-  `missing-binary | broken | running-pending | running-ok | running-failed |
-  stopped | never-started`. Frontend table maps these to colored badges.
-- Frontend opt-in toggle "Replace API token" so users can update the
-  Cloudflare API token without accidentally clearing it on every edit.
-- `make bump PART=patch|minor|major` and `make release` targets that read/write
-  `.version` (the single source of truth for the project version).
-- `.github/workflows/ci.yml` running backend lint, schema validation,
-  frontend lint, and frontend build on PRs.
-- `CONTRIBUTING.md` documenting yarn as the canonical package manager,
-  the `.version` SoT, and `make bump`/`make release` workflow.
+- **Multi-provider DDNS** powered by [qdm12/ddns-updater](https://github.com/qdm12/ddns-updater):
+  50+ DNS providers including Cloudflare, Namecheap, DuckDNS, GoDaddy,
+  Route53, Hetzner, Gandi, GCP, etc. (see [`docs/ddns-providers.md`](docs/ddns-providers.md)).
+- New `/api/ddns` endpoint group with full CRUD, enable/disable, manual
+  trigger, and a `/api/ddns/status` aggregate health endpoint.
+- New `ddns_configs` table (provider-agnostic, 1:1 with (provider, domain))
+  with runtime state columns (`last_run_at`, `last_run_success`,
+  `last_trigger_at`, `last_trigger_success`, `last_error`).
+- Backend `internal/ddns-manager.js` owns a single long-running
+  `ddns-updater` child process with debounced reload, persistent runtime
+  state, and graceful SIGTERM/SIGKILL shutdown.
+- Backend `internal/ddns-config-builder.js` translates DB rows to the
+  qdm12/ddns-updater JSON config format.
+- Frontend `pages/DdnsConfig/` and `modals/DdnsConfigModal.tsx` with a
+  dynamic per-provider form, write-only credentials with
+  "Replace existing value" opt-in, and per-row enable/disable/trigger.
+- Frontend `lib/ddnsProviders.ts` enumerates supported providers and their
+  field schemas (Cloudflare, DuckDNS, Namecheap, GoDaddy, Route53, Hetzner,
+  GCP, plus a pass-through list).
+- Migration `20260718000000_ddns_configs.js` creates the new table.
+- Migration `20260718000001_ddns_migrate_cloudflare.js` copies existing
+  rows from the legacy `cloudflare_ddns` table into `ddns_configs`,
+  splitting comma-separated domains into one row per (provider, domain).
+- Migration `20260718000002_ddns_drop_cloudflare_legacy.js` drops the legacy
+  `cloudflare_ddns` table once the new backend has shipped.
+- `docs/ddns-providers.md` lists every supported provider and the
+  credentials each one needs, with concrete JSON examples.
+- Sync-with-upstream workflow: `make sync-status`, `make sync-upstream`,
+  `make sync-upstream-rebase`, `make check-fork-boundaries` — all fork
+  modifications in upstream-owned files are wrapped in
+  `===== FORK START/END =====` delimiters to keep merge conflicts tiny.
 
 ### Changed
-- `cloudflare_api_token` is now write-only — never returned by GET. Existing
-  rows render an empty token in the modal until the user explicitly opts in
-  to replacing it.
-- `internalCloudflareDdns.{create,update,delete,enable,disable,trigger,getAll,startAllEnabled}`
-  are now async functions; they `await` child-process start/stop instead of
-  firing-and-forgetting.
-- `stop()` waits for the process to exit (with SIGKILL escalation after 5s)
-  and is `await`ed by all callers (`update`, `delete`, `disable`,
-  `startAllEnabled`, and the SIGTERM/SIGINT shutdown handler).
-- SIGTERM/SIGINT now run a graceful shutdown that stops all running
-  `cloudflare-ddns` child processes before closing the HTTP server, with a
-  10s force-exit safety net.
-- Frontend `CloudflareDdnsModal` uses `useMutation` `isPending` instead of a
-  hand-rolled `useState` flag.
-- Removed dead `setSearch("")` side effect in `TableWrapper.tsx` and added
-  error detail to the trigger-failed toast.
-- DDNS migrations renamed from `20260301...` to `20260228...` to match the
-  convention of dates ≤ today.
-- `yarn` is the canonical package manager; `package-lock.json` files removed
-  and `**/package-lock.json` added to `.gitignore`.
-- All `scripts/*` shell scripts upgraded to `set -euo pipefail`.
-- Dockerfile now fails loudly if `frontend/dist` is missing, with a hint to
-  run `make frontend` first.
-- Dropped fragile substring heuristics on `cloudflare-ddns` stdout/stderr
-  that previously tried to detect success/error by looking for "Updated" or
-  "error" — these could be false-positive on user-supplied domain names.
-  Runtime status now relies on `last_run_at` / `last_run_success` persisted
-  to the row.
+- **BREAKING**: The Cloudflare-only DDNS UI is gone. Routes are now
+  `/api/ddns/*` (not `/api/cloudflare-ddns/*`) and the menu item is "DDNS"
+  (not "Cloudflare DDNS"). Existing rows are auto-migrated.
+- **BREAKING**: All DDNS configs share a single global cron (env var
+  `DDNS_GLOBAL_CRON`, default `@every 5m`). The per-row `update_cron`
+  field is kept for display purposes but the ddns-updater binary doesn't
+  honor per-setting crons — different crons require different containers.
+- Docker image now uses `ghcr.io/qdm12/ddns-updater` instead of
+  `favonia/cloudflare-ddns:1.15.0`.
+- All fork modifications are wrapped in `===== FORK START/END =====` blocks
+  for easy upstream sync.
 
-### Fixed
-- `start()` failures (e.g. missing binary) now surface as
-  `ValidationError` to the caller instead of silently succeeding.
-- Trigger flow no longer overwrites the running scheduled-run state with the
-  manual-trigger result; manual triggers have their own `lastTriggerAt` /
-  `lastTriggerSuccess` fields.
-- `getAll()` no longer emits `GROUP BY id` (broke on Postgres).
-- `proxy-host.js` `getAll()` no longer emits `GROUP BY id` either (same bug).
-- `trigger()` 60s timeout now correctly `clearTimeout`s on exit and
-  escalates to SIGKILL after 5s; the timer no longer leaks.
-- Manual trigger failures now show the actual error message in the toast.
+### Removed
+- All Cloudflare-only application code:
+  `backend/internal/{cloudflare-ddns,ddns-process,ddns-state,ddns-env}.js`,
+  `backend/models/cloudflare_ddns.js`, `backend/routes/cloudflare-ddns.js`,
+  `frontend/src/pages/CloudflareDdns/`, `frontend/src/modals/CloudflareDdnsModal.tsx`,
+  plus the 7 corresponding `*CloudflareDdns*.ts` files under
+  `frontend/src/api/backend/` and `frontend/src/hooks/`.
+- 60 `cloudflare-ddns.*` locale strings from
+  `frontend/src/locale/src/en.json`.
+- Legacy schema paths under `backend/schema/paths/cloudflare-ddns/`.
 
 ## [2.14.0] - 2026-02-28
 
@@ -76,3 +73,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - React UI at "Cloudflare DDNS" with enable/disable/trigger actions and
   per-row process status.
 - IPv4/IPv6 domain splitting and provider configuration.
+- Per-row runtime state columns (`last_run_at`, `last_run_success`,
+  `last_trigger_at`, `last_trigger_success`, `last_error`).
+- Derived `processStatus.state` field with values:
+  `missing-binary | broken | running-pending | running-ok | running-failed |
+  stopped | never-started`.
+- Write-only Cloudflare API token with opt-in "Replace API token" toggle.
+- Graceful shutdown handler that stops DDNS child processes before exiting.
+- `make bump PART=patch|minor|major` and `make release` targets.
+- `.github/workflows/ci.yml` (lint + schema validation + build).
+- `CONTRIBUTING.md` (yarn, .version, make workflow).

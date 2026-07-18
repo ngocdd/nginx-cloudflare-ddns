@@ -481,7 +481,7 @@ sync-status: ## Show how many commits behind upstream $(UPSTREAM_BRANCH)
 	@git fetch $(UPSTREAM_REMOTE) $(UPSTREAM_BRANCH)
 	@echo ""
 	@echo "$(BLUE)❯ Local branch:    $$(git rev-parse --abbrev-ref HEAD)$(RESET)"
-	@echo "$(BLUE)❯ Upstream HEAD:   $$(git rev-parse --short $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH)$(RESET)"
+	@echo "$(BLUE)❯ Upstream HEAD:   $$(git rev-parse --short $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH))$(RESET)"
 	@AHEAD=$$(git rev-list --count $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH)..HEAD 2>/dev/null || echo "?"); \
 		BEHIND=$$(git rev-list --count HEAD..$(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH) 2>/dev/null || echo "?"); \
 		echo "$(YELLOW)  Ahead:  $$AHEAD commit(s) ahead of upstream$(RESET)"; \
