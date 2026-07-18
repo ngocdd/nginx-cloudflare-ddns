@@ -170,186 +170,6 @@
 	"certificate.renew": {
 		"defaultMessage": "Renew Certificate"
 	},
-	"cloudflare-ddns": {
-		"defaultMessage": "Cloudflare DDNS"
-	},
-	"cloudflare-ddns.add": {
-		"defaultMessage": "Add DDNS Configuration"
-	},
-	"cloudflare-ddns.edit": {
-		"defaultMessage": "Edit DDNS Configuration"
-	},
-	"cloudflare-ddns.delete": {
-		"defaultMessage": "Delete DDNS Configuration"
-	},
-	"cloudflare-ddns.delete.content": {
-		"defaultMessage": "Are you sure you want to delete this DDNS configuration? The running process will be stopped."
-	},
-	"cloudflare-ddns.config-name": {
-		"defaultMessage": "Configuration Name"
-	},
-	"cloudflare-ddns.config-name.placeholder": {
-		"defaultMessage": "My DDNS Config"
-	},
-	"cloudflare-ddns.api-token": {
-		"defaultMessage": "Cloudflare API Token"
-	},
-	"cloudflare-ddns.api-token.placeholder": {
-		"defaultMessage": "Enter your Cloudflare API Token"
-	},
-	"cloudflare-ddns.api-token.hint": {
-		"defaultMessage": "The token must have Zone:DNS:Edit permissions"
-	},
-	"cloudflare-ddns.domains": {
-		"defaultMessage": "Domains"
-	},
-	"cloudflare-ddns.domains-proxied": {
-		"defaultMessage": "Domains with Proxy"
-	},
-	"cloudflare-ddns.domains-proxied.placeholder": {
-		"defaultMessage": "example.com, sub.example.com"
-	},
-	"cloudflare-ddns.domains-proxied.hint": {
-		"defaultMessage": "Comma-separated list of domains with Cloudflare proxy enabled (both A and AAAA records)"
-	},
-	"cloudflare-ddns.domains-unproxied": {
-		"defaultMessage": "Domains without Proxy"
-	},
-	"cloudflare-ddns.domains-unproxied.placeholder": {
-		"defaultMessage": "direct.example.com"
-	},
-	"cloudflare-ddns.domains-unproxied.hint": {
-		"defaultMessage": "Comma-separated list of domains without Cloudflare proxy (direct DNS, both A and AAAA records)"
-	},
-	"cloudflare-ddns.domains.placeholder": {
-		"defaultMessage": "example.com, sub.example.com"
-	},
-	"cloudflare-ddns.domains.hint": {
-		"defaultMessage": "Comma-separated list of domains to update (both A and AAAA records)"
-	},
-	"cloudflare-ddns.ip4-domains": {
-		"defaultMessage": "IPv4 Domains"
-	},
-	"cloudflare-ddns.ip4-domains.placeholder": {
-		"defaultMessage": "ipv4.example.com"
-	},
-	"cloudflare-ddns.ip4-domains.hint": {
-		"defaultMessage": "Comma-separated list of domains to update with A records only"
-	},
-	"cloudflare-ddns.ip6-domains": {
-		"defaultMessage": "IPv6 Domains"
-	},
-	"cloudflare-ddns.ip6-domains.placeholder": {
-		"defaultMessage": "ipv6.example.com"
-	},
-	"cloudflare-ddns.ip6-domains.hint": {
-		"defaultMessage": "Comma-separated list of domains to update with AAAA records only"
-	},
-	"cloudflare-ddns.ip4-provider": {
-		"defaultMessage": "IPv4 Provider"
-	},
-	"cloudflare-ddns.ip4-provider.hint": {
-		"defaultMessage": "How to detect your public IPv4 address"
-	},
-	"cloudflare-ddns.ip6-provider": {
-		"defaultMessage": "IPv6 Provider"
-	},
-	"cloudflare-ddns.ip6-provider.hint": {
-		"defaultMessage": "How to detect your public IPv6 address"
-	},
-	"cloudflare-ddns.update-cron": {
-		"defaultMessage": "Update Schedule"
-	},
-	"cloudflare-ddns.update-cron.hint": {
-		"defaultMessage": "Cron expression or duration (e.g. @every 5m, @every 1h)"
-	},
-	"cloudflare-ddns.proxied": {
-		"defaultMessage": "Cloudflare Proxy"
-	},
-	"cloudflare-ddns.proxied.hint": {
-		"defaultMessage": "Whether to enable Cloudflare proxying on the DNS records"
-	},
-	"cloudflare-ddns.ttl": {
-		"defaultMessage": "TTL"
-	},
-	"cloudflare-ddns.ttl.hint": {
-		"defaultMessage": "DNS record TTL in seconds (1 = automatic)"
-	},
-	"cloudflare-ddns.record-comment": {
-		"defaultMessage": "Record Comment"
-	},
-	"cloudflare-ddns.record-comment.placeholder": {
-		"defaultMessage": "Managed by NPM DDNS"
-	},
-	"cloudflare-ddns.detection-timeout": {
-		"defaultMessage": "Detection Timeout"
-	},
-	"cloudflare-ddns.update-timeout": {
-		"defaultMessage": "Update Timeout"
-	},
-	"cloudflare-ddns.cache-expiration": {
-		"defaultMessage": "Cache Expiration"
-	},
-	"cloudflare-ddns.flags": {
-		"defaultMessage": "Flags"
-	},
-	"cloudflare-ddns.update-on-start": {
-		"defaultMessage": "Update on Start"
-	},
-	"cloudflare-ddns.update-on-start.hint": {
-		"defaultMessage": "Update DNS records immediately when the process starts"
-	},
-	"cloudflare-ddns.delete-on-stop": {
-		"defaultMessage": "Delete on Stop"
-	},
-	"cloudflare-ddns.delete-on-stop.hint": {
-		"defaultMessage": "Remove DNS records when the process is stopped"
-	},
-	"cloudflare-ddns.last-run": {
-		"defaultMessage": "Last Run"
-	},
-	"cloudflare-ddns.last-run.ok": {
-		"defaultMessage": "OK"
-	},
-	"cloudflare-ddns.last-run.error": {
-		"defaultMessage": "Error"
-	},
-	"cloudflare-ddns.process-status": {
-		"defaultMessage": "Status"
-	},
-	"cloudflare-ddns.running": {
-		"defaultMessage": "Running"
-	},
-	"cloudflare-ddns.stopped": {
-		"defaultMessage": "Stopped"
-	},
-	"cloudflare-ddns.trigger": {
-		"defaultMessage": "Trigger Update"
-	},
-	"cloudflare-ddns.trigger.started": {
-		"defaultMessage": "DDNS update triggered..."
-	},
-	"cloudflare-ddns.trigger.success": {
-		"defaultMessage": "DDNS update completed successfully"
-	},
-	"cloudflare-ddns.trigger.failed": {
-		"defaultMessage": "DDNS update failed"
-	},
-	"cloudflare-ddns.actions-title": {
-		"defaultMessage": "DDNS Actions"
-	},
-	"cloudflare-ddns.tab.basic": {
-		"defaultMessage": "Basic"
-	},
-	"cloudflare-ddns.tab.domains": {
-		"defaultMessage": "Domains"
-	},
-	"cloudflare-ddns.tab.providers": {
-		"defaultMessage": "IP Providers"
-	},
-	"cloudflare-ddns.tab.advanced": {
-		"defaultMessage": "Advanced"
-	},
 	"certificates": {
 		"defaultMessage": "Certificates"
 	},
@@ -639,7 +459,7 @@
 		"defaultMessage": "Let's Encrypt via HTTP"
 	},
 	"loading": {
-		"defaultMessage": "Loading…"
+		"defaultMessage": "Loading\u2026"
 	},
 	"login.2fa-code": {
 		"defaultMessage": "Verification Code"
@@ -675,7 +495,7 @@
 		"defaultMessage": "We are sorry but the page you are looking for was not found"
 	},
 	"notfound.title": {
-		"defaultMessage": "Oops… You just found an error page"
+		"defaultMessage": "Oops\u2026 You just found an error page"
 	},
 	"notification.error": {
 		"defaultMessage": "Error"

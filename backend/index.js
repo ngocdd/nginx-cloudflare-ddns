@@ -2,9 +2,9 @@
 
 import app from "./app.js";
 import internalCertificate from "./internal/certificate.js";
-// ===== FORK START: ddns integration (will move to internalDdnsManager) =====
-import internalCloudflareDdns from "./internal/cloudflare-ddns.js";
-import internalDdnsProcess from "./internal/ddns-process.js";
+// ===== FORK START: ddns integration =====
+import internalDdnsConfig from "./internal/ddns-config.js";
+import internalDdnsManager from "./internal/ddns-manager.js";
 // ===== FORK END =====
 import internalIpRanges from "./internal/ip_ranges.js";
 import { global as logger } from "./logger.js";
@@ -23,15 +23,13 @@ async function gracefulShutdown(signal) {
 	shuttingDown = true;
 	logger.info(`PID ${process.pid} received ${signal}, shutting down...`);
 
-	// Stop all running DDNS child processes first so they don't get SIGKILLed
+	// Stop the ddns-updater child process first so it doesn't get SIGKILLed
 	// by the init system (s6-overlay) when the parent disappears.
 	try {
-		const stopped = await internalDdnsProcess.stopAll();
-		if (stopped > 0) {
-			logger.info(`Stopped ${stopped} DDNS process(es)`);
-		}
+		await internalDdnsManager.stopAll();
+		logger.info("DDNS manager stopped");
 	} catch (err) {
-		logger.warn(`Error stopping DDNS processes during shutdown: ${err.message}`);
+		logger.warn(`Error stopping DDNS manager during shutdown: ${err.message}`);
 	}
 
 	if (httpServer) {
@@ -76,20 +74,23 @@ async function appStart() {
 			// so the UI shows correct timestamps immediately on first request
 			// after a restart (rather than waiting for the next cron tick).
 			try {
-				const loaded = await internalDdnsProcess.preloadFromDatabase();
-				logger.info(`Loaded runtime state for ${loaded} DDNS config(s) from DB`);
+				const rows = await import("./models/ddns_config.js").then((m) =>
+					m.default.query().where("is_deleted", 0),
+				);
+				await internalDdnsConfig.preloadFromDatabase(rows);
+				logger.info(`Loaded runtime state for ${rows.length} DDNS config(s) from DB`);
 			} catch (err) {
 				logger.warn(`Failed to preload DDNS runtime state: ${err.message}`);
 			}
 
-			// Start all enabled Cloudflare DDNS processes
+			// Start the single ddns-updater process with all enabled rows.
 			try {
-				const result = await internalCloudflareDdns.startAllEnabled();
+				const result = await internalDdnsConfig.startAllEnabled();
 				logger.info(
-					`Cloudflare DDNS startup: ${result.started}/${result.total} started${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
+					`DDNS startup: ${result.started}/${result.total} processes started${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
 				);
 			} catch (err) {
-				logger.error("Failed to start Cloudflare DDNS processes:", err.message);
+				logger.error("Failed to start DDNS processes:", err.message);
 			}
 			// ===== FORK END =====
 

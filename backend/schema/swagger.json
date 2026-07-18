@@ -29,10 +29,6 @@
 			"description": "Endpoints related to provider-agnostic DDNS Configurations"
 		},
 		{
-			"name": "cloudflare-ddns",
-			"description": "Endpoints related to Cloudflare DDNS Configuration"
-		},
-		{
 			"name": "access-lists",
 			"description": "Endpoints related to Access Lists"
 		},
@@ -111,40 +107,6 @@
 			},
 			"delete": {
 				"$ref": "./paths/ddns/ddnsID/delete.json"
-			}
-		},
-		"/cloudflare-ddns": {
-			"get": {
-				"$ref": "./paths/cloudflare-ddns/get.json"
-			},
-			"post": {
-				"$ref": "./paths/cloudflare-ddns/post.json"
-			}
-		},
-		"/cloudflare-ddns/{ddnsID}": {
-			"get": {
-				"$ref": "./paths/cloudflare-ddns/ddnsID/get.json"
-			},
-			"put": {
-				"$ref": "./paths/cloudflare-ddns/ddnsID/put.json"
-			},
-			"delete": {
-				"$ref": "./paths/cloudflare-ddns/ddnsID/delete.json"
-			}
-		},
-		"/cloudflare-ddns/{ddnsID}/enable": {
-			"post": {
-				"$ref": "./paths/cloudflare-ddns/ddnsID/enable/post.json"
-			}
-		},
-		"/cloudflare-ddns/{ddnsID}/disable": {
-			"post": {
-				"$ref": "./paths/cloudflare-ddns/ddnsID/disable/post.json"
-			}
-		},
-		"/cloudflare-ddns/{ddnsID}/trigger": {
-			"post": {
-				"$ref": "./paths/cloudflare-ddns/ddnsID/trigger/post.json"
 			}
 		},
 		"/nginx/access-lists": {

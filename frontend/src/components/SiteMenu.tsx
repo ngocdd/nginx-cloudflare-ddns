@@ -96,11 +96,11 @@ const menuItems: MenuItem[] = [
 		label: "auditlogs",
 		permissionSection: ADMIN,
 	},
-	// ===== FORK START: ddns menu item (cloudflare-ddns is the current implementation; will be renamed to /ddns) =====
+	// ===== FORK START: ddns menu item =====
 	{
-		to: "/cloudflare-ddns",
+		to: "/ddns",
 		icon: IconCloud,
-		label: "cloudflare-ddns",
+		label: "ddns-config",
 		permissionSection: ADMIN,
 	},
 	// ===== FORK END =====

@@ -7,8 +7,8 @@
 # or `make build-multiarch` targets, which build the frontend first.
 
 FROM nginxproxymanager/testca AS testca
-# ===== FORK START: ddns binary (currently cloudflare-ddns; will be swapped for qdm12/ddns-updater) =====
-FROM favonia/cloudflare-ddns:1.15.0 AS cloudflare-ddns
+# ===== FORK START: ddns binary =====
+FROM ghcr.io/qdm12/ddns-updater:latest AS ddns-updater
 # ===== FORK END =====
 FROM nginxproxymanager/nginx-full:certbot-node
 
@@ -40,9 +40,9 @@ RUN echo "fs.file-max = 65535" > /etc/sysctl.conf \
 COPY docker/scripts/install-s6 /tmp/install-s6
 RUN /tmp/install-s6 "${TARGETPLATFORM}" && rm -f /tmp/install-s6
 
-# ===== FORK START: ddns binary (currently cloudflare-ddns; will be swapped for qdm12/ddns-updater) =====
-# cloudflare-ddns binary (from official Docker image)
-COPY --from=cloudflare-ddns /bin/ddns /usr/local/bin/cloudflare-ddns
+# ===== FORK START: ddns binary =====
+# ddns-updater binary (from official Docker image)
+COPY --from=ddns-updater /usr/bin/ddns-updater /usr/local/bin/ddns-updater
 # ===== FORK END =====
 
 EXPOSE 80 81 443

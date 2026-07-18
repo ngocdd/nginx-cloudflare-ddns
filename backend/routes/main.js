@@ -3,8 +3,7 @@ import errs from "../lib/error.js";
 import pjson from "../package.json" with { type: "json" };
 import { isSetup } from "../setup.js";
 import auditLogRoutes from "./audit-log.js";
-// ===== FORK START: ddns routes (cloudflare-ddns is the current implementation; will be renamed to ddns) =====
-import cloudflareDdnsRoutes from "./cloudflare-ddns.js";
+// ===== FORK START: ddns routes =====
 import ddnsRoutes from "./ddns.js";
 // ===== FORK END =====
 import accessListsRoutes from "./nginx/access_lists.js";
@@ -52,8 +51,7 @@ router.use("/audit-log", auditLogRoutes);
 router.use("/reports", reportsRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/version", versionRoutes);
-// ===== FORK START: ddns routes (cloudflare-ddns is the current implementation; will be renamed to ddns) =====
-router.use("/cloudflare-ddns", cloudflareDdnsRoutes);
+// ===== FORK START: ddns routes =====
 router.use("/ddns", ddnsRoutes);
 // ===== FORK END =====
 router.use("/nginx/proxy-hosts", proxyHostsRoutes);
