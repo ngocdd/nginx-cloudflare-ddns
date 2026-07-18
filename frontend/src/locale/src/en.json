@@ -781,5 +781,92 @@
 	},
 	"users": {
 		"defaultMessage": "Users"
+	},
+	"ddns-config": {
+		"defaultMessage": "DDNS"
+	},
+	"ddns-config.add": {
+		"defaultMessage": "Add DDNS Configuration"
+	},
+	"ddns-config.edit": {
+		"defaultMessage": "Edit DDNS Configuration"
+	},
+	"ddns-config.delete": {
+		"defaultMessage": "Delete DDNS Configuration"
+	},
+	"ddns-config.delete.content": {
+		"defaultMessage": "Are you sure you want to delete this DDNS configuration? The DNS records managed by it will not be updated after deletion."
+	},
+	"ddns-config.name": {
+		"defaultMessage": "Configuration Name"
+	},
+	"ddns-config.name.placeholder": {
+		"defaultMessage": "Home, Office, etc."
+	},
+	"ddns-config.provider": {
+		"defaultMessage": "Provider"
+	},
+	"ddns-config.provider.hint": {
+		"defaultMessage": "Which DNS provider to update."
+	},
+	"ddns-config.domain": {
+		"defaultMessage": "Domain"
+	},
+	"ddns-config.ip-version": {
+		"defaultMessage": "IP Version"
+	},
+	"ddns-config.update-cron": {
+		"defaultMessage": "Update Schedule"
+	},
+	"ddns-config.update-cron.hint": {
+		"defaultMessage": "Informational only. The ddns-updater binary uses a global cron (UPDATE_CRON env var)."
+	},
+	"ddns-config.provider-config": {
+		"defaultMessage": "Provider Configuration"
+	},
+	"ddns-config.provider-config.empty": {
+		"defaultMessage": "No additional configuration is required for this provider."
+	},
+	"ddns-config.replace-secret": {
+		"defaultMessage": "Replace existing value"
+	},
+	"ddns-config.last-run": {
+		"defaultMessage": "Status"
+	},
+	"ddns-config.trigger": {
+		"defaultMessage": "Run now"
+	},
+	"ddns-config.trigger.started": {
+		"defaultMessage": "Triggering DDNS update..."
+	},
+	"ddns-config.trigger.success": {
+		"defaultMessage": "DDNS update completed successfully"
+	},
+	"ddns-config.trigger.failed": {
+		"defaultMessage": "DDNS update failed"
+	},
+	"ddns-config.actions-title": {
+		"defaultMessage": "Actions for {name}"
+	},
+	"ddns-config.state.missing-binary": {
+		"defaultMessage": "Binary missing"
+	},
+	"ddns-config.state.broken": {
+		"defaultMessage": "Broken"
+	},
+	"ddns-config.state.running-ok": {
+		"defaultMessage": "Running OK"
+	},
+	"ddns-config.state.running-failed": {
+		"defaultMessage": "Running with errors"
+	},
+	"ddns-config.state.running-pending": {
+		"defaultMessage": "Running (pending first run)"
+	},
+	"ddns-config.state.stopped": {
+		"defaultMessage": "Stopped"
+	},
+	"ddns-config.state.never-started": {
+		"defaultMessage": "Never started"
 	}
 }

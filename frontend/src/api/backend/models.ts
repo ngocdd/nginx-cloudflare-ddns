@@ -223,38 +223,55 @@ export interface DNSProvider {
 	credentials: string;
 }
 
-export interface CloudflareDdns {
+export interface DdnsConfig {
 	id: number;
-	createdOn: string;
-	modifiedOn: string;
-	ownerUserId: number;
+	createdOn?: string;
+	modifiedOn?: string;
+	ownerUserId?: number;
 	enabled: boolean;
 	name: string;
-	cloudflareApiToken: string;
-	domains: string;
-	unproxiedDomains: string;
-	ip4Domains: string;
-	ip6Domains: string;
-	ip4Provider: string;
-	ip6Provider: string;
-	updateCron: string;
-	updateOnStart: boolean;
-	deleteOnStop: boolean;
-	proxied: string;
-	ttl: number;
-	recordComment: string;
-	detectionTimeout: string;
-	updateTimeout: string;
-	cacheExpiration: string;
-	meta: Record<string, any>;
+	provider: string;
+	domain: string;
+	ipVersion: "ipv4" | "ipv6";
+	updateCron?: string;
+	// Provider-specific configuration. Sensitive keys (api_token, token,
+	// password, key, secret, etc.) are stripped by the backend on GET, so
+	// they show up as empty strings here until the user explicitly replaces
+	// them.
+	configJson: {
+		api_token?: string;
+		token?: string;
+		password?: string;
+		key?: string;
+		secret?: string;
+		email?: string;
+		user_service_key?: string;
+		access_key_id?: string;
+		secret_access_key?: string;
+		credentials_json?: string;
+		zone_identifier?: string;
+		project?: string;
+		proxied?: boolean;
+		ttl?: number;
+		record_comment?: string;
+		detection_timeout?: string;
+		update_timeout?: string;
+		cache_expiration?: string;
+		update_on_start?: boolean;
+		delete_on_stop?: boolean;
+		ip4_provider?: string;
+		ip6_provider?: string;
+		[key: string]: unknown;
+	};
+	meta?: Record<string, any>;
 	processStatus?: {
+		state: string;
 		running: boolean;
-		pid?: number;
-		startedAt?: string;
-		lastOutput?: string;
-		lastError?: string;
-		lastRunAt?: string;
-		lastRunSuccess?: boolean;
+		lastRunAt?: string | null;
+		lastRunSuccess?: boolean | null;
+		lastTriggerAt?: string | null;
+		lastTriggerSuccess?: boolean | null;
+		lastError?: string | null;
 	};
 	// Expansions:
 	owner?: User;
