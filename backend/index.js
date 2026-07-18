@@ -2,8 +2,10 @@
 
 import app from "./app.js";
 import internalCertificate from "./internal/certificate.js";
+// ===== FORK START: ddns integration (will move to internalDdnsManager) =====
 import internalCloudflareDdns from "./internal/cloudflare-ddns.js";
 import internalDdnsProcess from "./internal/ddns-process.js";
+// ===== FORK END =====
 import internalIpRanges from "./internal/ip_ranges.js";
 import { global as logger } from "./logger.js";
 import { migrateUp } from "./migrate.js";
@@ -12,6 +14,7 @@ import setup from "./setup.js";
 
 const IP_RANGES_FETCH_ENABLED = process.env.IP_RANGES_FETCH_ENABLED !== "false";
 
+// ===== FORK START: graceful shutdown + DDNS child-process management =====
 let httpServer = null;
 let shuttingDown = false;
 
@@ -48,6 +51,7 @@ async function gracefulShutdown(signal) {
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+// ===== FORK END =====
 
 async function appStart() {
 	return migrateUp()
@@ -67,6 +71,7 @@ async function appStart() {
 			internalCertificate.initTimer();
 			internalIpRanges.initTimer();
 
+			// ===== FORK START: preload DDNS runtime state + start enabled configs =====
 			// Preload last_run_at / last_trigger_at / last_error for every row
 			// so the UI shows correct timestamps immediately on first request
 			// after a restart (rather than waiting for the next cron tick).
@@ -86,6 +91,7 @@ async function appStart() {
 			} catch (err) {
 				logger.error("Failed to start Cloudflare DDNS processes:", err.message);
 			}
+			// ===== FORK END =====
 
 			httpServer = app.listen(3000, () => {
 				logger.info(`Backend PID ${process.pid} listening on port 3000 ...`);

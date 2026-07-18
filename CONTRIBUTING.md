@@ -15,6 +15,67 @@ with an integrated Cloudflare DDNS feature.
 - For DDNS-specific bugs, please use the
   [Cloudflare DDNS issue template](.github/ISSUE_TEMPLATE/cloudflare-ddns.md).
 
+## Syncing with upstream
+
+This fork tracks the upstream `develop` branch. To minimize merge conflicts,
+**every modification we make to an upstream-owned file must be wrapped in
+a `===== FORK START/END =====` block**. The `make check-fork-boundaries`
+target enforces this in CI.
+
+### Branch layout
+
+| Branch | Purpose |
+| --- | --- |
+| `main` | Stable releases — what Docker Hub tags point at |
+| `develop` | Tracking branch — periodically merges upstream/develop |
+
+### Periodic sync workflow
+
+```bash
+git checkout develop
+make sync-upstream                 # merges upstream/develop into local develop
+# If conflicts appear, resolve them keeping FORK blocks intact
+make check-fork-boundaries         # verify all FORK delimiters survived
+make lint test                     # full validation
+git push origin develop
+
+# After validation passes on develop, fast-forward main:
+git checkout main
+git merge --ff-only develop
+git push origin main
+```
+
+### Rules for touching upstream files
+
+1. Wrap every block of fork-specific code with:
+   ```js
+   // ===== FORK START: <short description> =====
+   ...your code...
+   // ===== FORK END =====
+   ```
+2. New files belong in new directories (`backend/internal/ddns-*`,
+   `backend/routes/ddns.js`, `frontend/src/pages/DdnsConfig/`, etc.) — never
+   extend an upstream file unless you have to.
+3. Locale strings for the fork go under a top-level `"ddns-config"` key in
+   `frontend/src/locale/lang/en.json`. This keeps conflict markers localized.
+4. Migrations are additive and timestamped. Never edit a migration that has
+   already shipped.
+5. Don't edit `package.json` / `yarn.lock` / `package-lock.json` of upstream
+   unless you actually need to add a dependency. Document the reason in the
+   commit message.
+
+### Conflict resolution checklist
+
+When `sync-upstream` produces a conflict:
+
+- [ ] Open each conflicted file and look for upstream hunks vs. fork blocks
+- [ ] Keep both — the upstream hunk from upstream + the `===== FORK START/END =====`
+      block from the fork
+- [ ] Re-run `make check-fork-boundaries`
+- [ ] `make lint test`
+- [ ] Smoke-test `make run` and visit `/ddns` (or whatever feature lives in the
+      modified file)
+
 ## Development setup
 
 Prerequisites:

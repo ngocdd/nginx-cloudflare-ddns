@@ -25,7 +25,9 @@ const ProxyHosts = lazy(() => import("src/pages/Nginx/ProxyHosts"));
 const RedirectionHosts = lazy(() => import("src/pages/Nginx/RedirectionHosts"));
 const DeadHosts = lazy(() => import("src/pages/Nginx/DeadHosts"));
 const Streams = lazy(() => import("src/pages/Nginx/Streams"));
+// ===== FORK START: ddns route (cloudflare-ddns is the current implementation; will be renamed to /ddns) =====
 const CloudflareDdns = lazy(() => import("src/pages/CloudflareDdns"));
+// ===== FORK END =====
 
 function Router() {
 	const health = useHealth();
@@ -71,7 +73,9 @@ function Router() {
 							<Route path="/nginx/redirection" element={<RedirectionHosts />} />
 							<Route path="/nginx/404" element={<DeadHosts />} />
 							<Route path="/nginx/stream" element={<Streams />} />
+							{/* ===== FORK START: ddns route (cloudflare-ddns is the current implementation; will be renamed to /ddns) ===== */}
 							<Route path="/cloudflare-ddns" element={<CloudflareDdns />} />
+							{/* ===== FORK END ===== */}
 							<Route path="/" element={<Dashboard />} />
 						</Routes>
 					</Suspense>

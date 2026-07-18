@@ -1,7 +1,7 @@
 # Nginx Proxy Manager with Cloudflare DDNS Integration
 # Makefile for building and managing the project
 
-.PHONY: help build build-dev push clean frontend backend install dev dev-stop test lint all release bump version up down restart logs ps pull config run run-stop run-logs run-status run-clean run-backend run-frontend run-devbe env-local setup-local
+.PHONY: help build build-dev push clean frontend backend install dev dev-stop test lint all release bump version up down restart logs ps pull config run run-stop run-logs run-status run-clean run-backend run-frontend run-devbe env-local setup-local sync-upstream sync-upstream-rebase sync-status sync-fork-boundaries check-fork-boundaries
 
 # Variables
 IMAGE_NAME ?= nginx-proxy-manager-ddns
@@ -448,5 +448,108 @@ run-devbe: setup-local ## Run backend + Vite dev server for active development
 	@echo "$(YELLOW)  Frontend: http://localhost:$(FRONTEND_PORT) (Vite dev / HMR)$(RESET)"
 	@echo "$(YELLOW)  Logs:     make run-logs (backend) / tail -f .run/frontend.log$(RESET)"
 	@echo "$(YELLOW)  Stop:     make run-stop (kills both)$(RESET)"
+
+# ============================================================================
+# Syncing with upstream (NginxProxyManager/nginx-proxy-manager)
+# ============================================================================
+#
+# Branch layout:
+#   main      this fork's release branch — what Docker Hub tags point at
+#   develop   tracking branch — periodically merges upstream/develop
+#
+# Workflow (full):
+#   git checkout develop
+#   make sync-upstream           # merge upstream/develop into local develop
+#   # resolve any conflicts (see CONTRIBUTING.md "Syncing with upstream")
+#   make check-fork-boundaries   # verify FORK delimiters are intact
+#   make lint test               # full validation
+#   git push origin develop
+#
+# After validation passes on develop, fast-forward main:
+#   git checkout main
+#   git merge --ff-only develop
+#   git push origin main
+#   make bump PART=minor
+# ============================================================================
+
+UPSTREAM_REMOTE ?= upstream
+UPSTREAM_BRANCH ?= develop
+SYNC_BRANCH ?= develop
+
+sync-status: ## Show how many commits behind upstream $(UPSTREAM_BRANCH)
+	@echo "$(BLUE)❯ Fetching $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH)...$(RESET)"
+	@git fetch $(UPSTREAM_REMOTE) $(UPSTREAM_BRANCH)
+	@echo ""
+	@echo "$(BLUE)❯ Local branch:    $$(git rev-parse --abbrev-ref HEAD)$(RESET)"
+	@echo "$(BLUE)❯ Upstream HEAD:   $$(git rev-parse --short $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH)$(RESET)"
+	@AHEAD=$$(git rev-list --count $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH)..HEAD 2>/dev/null || echo "?"); \
+		BEHIND=$$(git rev-list --count HEAD..$(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH) 2>/dev/null || echo "?"); \
+		echo "$(YELLOW)  Ahead:  $$AHEAD commit(s) ahead of upstream$(RESET)"; \
+		echo "$(YELLOW)  Behind: $$BEHIND commit(s) behind upstream$(RESET)"
+	@echo ""
+	@if [ "$$(git rev-list --count HEAD..$(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH))" -gt 0 ]; then \
+		echo "$(BLUE)❯ Latest upstream commits not yet merged:$(RESET)"; \
+		git log --oneline HEAD..$(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH) | head -20; \
+	fi
+
+sync-upstream: ## Merge upstream/$(UPSTREAM_BRANCH) into $(SYNC_BRANCH) (run from $(SYNC_BRANCH))
+	@echo "$(BLUE)❯ Fetching $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH)...$(RESET)"
+	@git fetch $(UPSTREAM_REMOTE) $(UPSTREAM_BRANCH)
+	@CURRENT=$$(git rev-parse --abbrev-ref HEAD); \
+		if [ "$$CURRENT" != "$(SYNC_BRANCH)" ]; then \
+			echo "$(RED)✗ Must be on branch '$(SYNC_BRANCH)' (currently on '$$CURRENT')$(RESET)"; \
+			echo "$(YELLOW)  Run: git checkout $(SYNC_BRANCH)$(RESET)"; \
+			exit 1; \
+		fi
+	@echo "$(BLUE)❯ Merging $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH) into $(SYNC_BRANCH)...$(RESET)"
+	@git merge --no-ff $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH) -m "Merge upstream/$(UPSTREAM_BRANCH) into $(SYNC_BRANCH)"
+	@echo ""
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "$(YELLOW)⚠ Merge produced conflicts. Resolve them, then:$(RESET)"; \
+		echo "$(YELLOW)  1. Edit the conflicted files (look for ===== FORK START/END ===== blocks)$(RESET)"; \
+		echo "$(YELLOW)  2. git add <files> && git commit$(RESET)"; \
+		echo "$(YELLOW)  3. make check-fork-boundaries && make lint test$(RESET)"; \
+	else \
+		echo "$(GREEN)✓ Clean merge — no conflicts$(RESET)"; \
+	fi
+
+sync-upstream-rebase: ## Rebase current $(SYNC_BRANCH) onto upstream/$(UPSTREAM_BRANCH)
+	@echo "$(BLUE)❯ Fetching $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH)...$(RESET)"
+	@git fetch $(UPSTREAM_REMOTE) $(UPSTREAM_BRANCH)
+	@CURRENT=$$(git rev-parse --abbrev-ref HEAD); \
+		if [ "$$CURRENT" != "$(SYNC_BRANCH)" ]; then \
+			echo "$(RED)✗ Must be on branch '$(SYNC_BRANCH)' (currently on '$$CURRENT')$(RESET)"; \
+			exit 1; \
+		fi
+	@echo "$(BLUE)❯ Rebasing $(SYNC_BRANCH) onto $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH)...$(RESET)"
+	@git rebase $(UPSTREAM_REMOTE)/$(UPSTREAM_BRANCH)
+	@echo "$(GREEN)✓ Rebase complete$(RESET)"
+
+# Lists every file the fork has modified relative to the upstream default branch.
+# Used by sync-status-style sanity checks and the fork-boundaries CI guard.
+FORK_FILES := backend/routes/main.js \
+	backend/setup.js \
+	backend/index.js \
+	docker/Dockerfile \
+	frontend/src/Router.tsx \
+	frontend/src/components/SiteMenu.tsx \
+	frontend/src/locale/src/en.json
+
+check-fork-boundaries: ## Verify every modified fork file contains ===== FORK START/END ===== delimiters
+	@echo "$(BLUE)❯ Checking FORK delimiters on modified files...$(RESET)"
+	@status=0; \
+	for f in $(FORK_FILES); do \
+		if [ ! -f "$$f" ]; then \
+			echo "$(YELLOW)  ⚠ $$f (file does not exist — skipping)$(RESET)"; \
+			continue; \
+		fi; \
+		if grep -q "===== FORK START" "$$f" && grep -q "===== FORK END" "$$f"; then \
+			echo "$(GREEN)  ✓ $$f$(RESET)"; \
+		else \
+			echo "$(RED)  ✗ $$f (missing FORK delimiters)$(RESET)"; \
+			status=1; \
+		fi; \
+	done; \
+	exit $$status
 
 .DEFAULT_GOAL := help
