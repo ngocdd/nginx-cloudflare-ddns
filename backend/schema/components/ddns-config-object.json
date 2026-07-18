@@ -1,0 +1,206 @@
+{
+	"type": "object",
+	"description": "DDNS Configuration (provider-agnostic)",
+	"required": ["id"],
+	"additionalProperties": false,
+	"properties": {
+		"id": {
+			"type": "integer",
+			"minimum": 1
+		},
+		"created_on": {
+			"type": "string"
+		},
+		"modified_on": {
+			"type": "string"
+		},
+		"owner_user_id": {
+			"type": "integer",
+			"minimum": 1
+		},
+		"is_deleted": {
+			"type": "boolean"
+		},
+		"enabled": {
+			"type": "boolean"
+		},
+		"name": {
+			"type": "string",
+			"minLength": 0,
+			"maxLength": 255
+		},
+		"provider": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 64,
+			"description": "Lower-case provider key from qdm12/ddns-updater (e.g. cloudflare, duckdns, namecheap, godaddy, hetzner, route53, ...)",
+			"enum": [
+				"aliyun", "allinkl", "changeip", "cloudflare", "custom", "dd24", "ddnss",
+				"desec", "digitalocean", "dnsomatic", "dnspod", "domeneshop", "dondominio",
+				"dreamhost", "duckdns", "dyn", "dynu", "dynv6", "easydns", "example",
+				"freedns", "gandi", "gcp", "godaddy", "goip", "he", "hetzner", "hetznercloud",
+				"infomaniak", "inwx", "ionos", "ipv64", "linode", "loopia", "luadns",
+				"myaddr", "namecheap", "namecom", "namesilo", "netcup", "njalla", "noip",
+				"nowdns", "opendns", "ovh", "porkbun", "route53", "scaleway", "selfhostde",
+				"servercow", "spaceship", "spdyn", "strato", "variomedia", "vercel",
+				"vultr", "zoneedit"
+			]
+		},
+		"domain": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 255,
+			"description": "Single FQDN that this entry manages. One row per (provider, domain)."
+		},
+		"ip_version": {
+			"type": "string",
+			"enum": ["ipv4", "ipv6"],
+			"default": "ipv4",
+			"description": "Which record type (A or AAAA) this entry manages."
+		},
+		"update_cron": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 255,
+			"description": "Informational only — the ddns-updater binary uses the global cron (UPDATE_CRON env var or DDNS_GLOBAL_CRON) for the whole process."
+		},
+		"config_json": {
+			"type": "object",
+			"description": "Provider-specific configuration. Sensitive keys (api_token, token, password, key, secret, access_token, credentials) are writeOnly and redacted in GET responses.",
+			"properties": {
+				"api_token": {
+					"type": "string",
+					"writeOnly": true,
+					"description": "Cloudflare / Hetzner Cloud API token (write-only)."
+				},
+				"token": {
+					"type": "string",
+					"writeOnly": true,
+					"description": "DuckDNS / Hetzner token (write-only)."
+				},
+				"password": {
+					"type": "string",
+					"writeOnly": true,
+					"description": "Namecheap / No-IP / Dynu / Selfhost.de password (write-only)."
+				},
+				"key": {
+					"type": "string",
+					"writeOnly": true,
+					"description": "GoDaddy / Dreamhost / Gandi API key (write-only)."
+				},
+				"secret": {
+					"type": "string",
+					"writeOnly": true,
+					"description": "GoDaddy / Dreamhost / Gandi API secret (write-only)."
+				},
+				"email": {
+					"type": "string",
+					"description": "Cloudflare legacy email (used with key)."
+				},
+				"user_service_key": {
+					"type": "string",
+					"writeOnly": true,
+					"description": "Cloudflare legacy user service key (write-only)."
+				},
+				"access_key_id": {
+					"type": "string",
+					"writeOnly": true
+				},
+				"secret_access_key": {
+					"type": "string",
+					"writeOnly": true
+				},
+				"credentials_json": {
+					"type": "string",
+					"writeOnly": true,
+					"description": "GCP service-account JSON blob (write-only)."
+				},
+				"zone_identifier": {
+					"type": "string",
+					"description": "Cloudflare / Route53 zone ID."
+				},
+				"project": {
+					"type": "string",
+					"description": "GCP project ID."
+				},
+				"proxied": {
+					"type": "boolean",
+					"description": "Cloudflare proxy (orange cloud). Ignored by other providers."
+				},
+				"ttl": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 86400
+				},
+				"record_comment": {
+					"type": "string",
+					"maxLength": 500
+				},
+				"detection_timeout": {
+					"type": "string",
+					"maxLength": 50
+				},
+				"update_timeout": {
+					"type": "string",
+					"maxLength": 50
+				},
+				"cache_expiration": {
+					"type": "string",
+					"maxLength": 50
+				},
+				"update_on_start": {
+					"type": "boolean"
+				},
+				"delete_on_stop": {
+					"type": "boolean"
+				},
+				"ip4_provider": {
+					"type": "string"
+				},
+				"ip6_provider": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": true
+		},
+		"last_run_at": {
+			"type": ["string", "null"],
+			"format": "date-time"
+		},
+		"last_run_success": {
+			"type": "boolean"
+		},
+		"last_trigger_at": {
+			"type": ["string", "null"],
+			"format": "date-time"
+		},
+		"last_trigger_success": {
+			"type": "boolean"
+		},
+		"last_error": {
+			"type": ["string", "null"]
+		},
+		"meta": {
+			"type": "object"
+		},
+		"process_status": {
+			"type": "object",
+			"description": "Derived runtime state. Computed by the backend; not persisted as-is.",
+			"properties": {
+				"state": {
+					"type": "string",
+					"enum": [
+						"missing-binary", "broken", "running-ok", "running-failed",
+						"running-pending", "stopped", "never-started"
+					]
+				},
+				"running": { "type": "boolean" },
+				"lastRunAt": { "type": ["string", "null"], "format": "date-time" },
+				"lastRunSuccess": { "type": ["boolean", "null"] },
+				"lastTriggerAt": { "type": ["string", "null"], "format": "date-time" },
+				"lastTriggerSuccess": { "type": ["boolean", "null"] },
+				"lastError": { "type": ["string", "null"] }
+			}
+		}
+	}
+}

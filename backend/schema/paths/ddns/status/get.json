@@ -1,0 +1,54 @@
+{
+	"operationId": "getDdnsStatus",
+	"summary": "Get runtime status of the DDNS subsystem",
+	"tags": ["ddns"],
+	"security": [
+		{
+			"bearerAuth": ["admin"]
+		}
+	],
+	"responses": {
+		"200": {
+			"description": "200 response",
+			"content": {
+				"application/json": {
+					"schema": {
+						"type": "object",
+						"properties": {
+							"binary": {
+								"type": "object",
+								"properties": {
+									"available": { "type": "boolean" },
+									"error": { "type": ["string", "null"] }
+								}
+							},
+							"total": { "type": "integer" },
+							"enabled": { "type": "integer" },
+							"running": { "type": "integer" },
+							"failed": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"id": { "type": "integer" },
+										"name": { "type": "string" },
+										"provider": { "type": "string" },
+										"domain": { "type": "string" },
+										"state": { "type": "string" },
+										"reason": { "type": "string" }
+									}
+								}
+							},
+							"statuses": {
+								"type": "object",
+								"additionalProperties": {
+									"type": "object"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

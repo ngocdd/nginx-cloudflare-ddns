@@ -1,0 +1,33 @@
+{
+	"operationId": "getDdnsConfig",
+	"summary": "Get a DDNS Configuration",
+	"tags": ["ddns"],
+	"security": [
+		{
+			"bearerAuth": ["admin"]
+		}
+	],
+	"parameters": [
+		{
+			"in": "path",
+			"name": "ddnsID",
+			"required": true,
+			"schema": {
+				"type": "integer",
+				"minimum": 1
+			}
+		}
+	],
+	"responses": {
+		"200": {
+			"description": "200 response",
+			"content": {
+				"application/json": {
+					"schema": {
+						"$ref": "../../../components/ddns-config-object.json"
+					}
+				}
+			}
+		}
+	}
+}

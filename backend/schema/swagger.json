@@ -25,6 +25,10 @@
 			"description": "Endpoints related to Audit Logs"
 		},
 		{
+			"name": "ddns",
+			"description": "Endpoints related to provider-agnostic DDNS Configurations"
+		},
+		{
 			"name": "cloudflare-ddns",
 			"description": "Endpoints related to Cloudflare DDNS Configuration"
 		},
@@ -83,6 +87,30 @@
 		"/audit-log/{id}": {
 			"get": {
 				"$ref": "./paths/audit-log/id/get.json"
+			}
+		},
+		"/ddns": {
+			"get": {
+				"$ref": "./paths/ddns/get.json"
+			},
+			"post": {
+				"$ref": "./paths/ddns/post.json"
+			}
+		},
+		"/ddns/status": {
+			"get": {
+				"$ref": "./paths/ddns/status/get.json"
+			}
+		},
+		"/ddns/{ddnsID}": {
+			"get": {
+				"$ref": "./paths/ddns/ddnsID/get.json"
+			},
+			"put": {
+				"$ref": "./paths/ddns/ddnsID/put.json"
+			},
+			"delete": {
+				"$ref": "./paths/ddns/ddnsID/delete.json"
 			}
 		},
 		"/cloudflare-ddns": {

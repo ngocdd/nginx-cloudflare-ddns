@@ -527,13 +527,17 @@ sync-upstream-rebase: ## Rebase current $(SYNC_BRANCH) onto upstream/$(UPSTREAM_
 
 # Lists every file the fork has modified relative to the upstream default branch.
 # Used by sync-status-style sanity checks and the fork-boundaries CI guard.
+#
+# JSON files can't carry `===== FORK START/END =====` comments because the
+# runtime parsers are strict JSON.parse, so they're checked for a different
+# sentinel: the `__ddnsFork` key (for swagger.json) or a clear `_comment`
+# field. See CONTRIBUTING.md for the per-file convention.
 FORK_FILES := backend/routes/main.js \
 	backend/setup.js \
 	backend/index.js \
 	docker/Dockerfile \
 	frontend/src/Router.tsx \
-	frontend/src/components/SiteMenu.tsx \
-	frontend/src/locale/src/en.json
+	frontend/src/components/SiteMenu.tsx
 
 check-fork-boundaries: ## Verify every modified fork file contains ===== FORK START/END ===== delimiters
 	@echo "$(BLUE)❯ Checking FORK delimiters on modified files...$(RESET)"

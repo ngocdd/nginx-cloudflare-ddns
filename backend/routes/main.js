@@ -5,6 +5,7 @@ import { isSetup } from "../setup.js";
 import auditLogRoutes from "./audit-log.js";
 // ===== FORK START: ddns routes (cloudflare-ddns is the current implementation; will be renamed to ddns) =====
 import cloudflareDdnsRoutes from "./cloudflare-ddns.js";
+import ddnsRoutes from "./ddns.js";
 // ===== FORK END =====
 import accessListsRoutes from "./nginx/access_lists.js";
 import certificatesHostsRoutes from "./nginx/certificates.js";
@@ -53,6 +54,7 @@ router.use("/settings", settingsRoutes);
 router.use("/version", versionRoutes);
 // ===== FORK START: ddns routes (cloudflare-ddns is the current implementation; will be renamed to ddns) =====
 router.use("/cloudflare-ddns", cloudflareDdnsRoutes);
+router.use("/ddns", ddnsRoutes);
 // ===== FORK END =====
 router.use("/nginx/proxy-hosts", proxyHostsRoutes);
 router.use("/nginx/redirection-hosts", redirectionHostsRoutes);

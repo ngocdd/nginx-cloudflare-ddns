@@ -1,0 +1,75 @@
+{
+	"operationId": "createDdnsConfig",
+	"summary": "Create a DDNS Configuration",
+	"tags": ["ddns"],
+	"security": [
+		{
+			"bearerAuth": ["admin"]
+		}
+	],
+	"requestBody": {
+		"description": "DDNS Configuration Payload",
+		"required": true,
+		"content": {
+			"application/json": {
+				"schema": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["provider", "domain"],
+					"properties": {
+						"name": {
+							"$ref": "../../components/ddns-config-object.json#/properties/name"
+						},
+						"provider": {
+							"$ref": "../../components/ddns-config-object.json#/properties/provider"
+						},
+						"domain": {
+							"$ref": "../../components/ddns-config-object.json#/properties/domain"
+						},
+						"ip_version": {
+							"$ref": "../../components/ddns-config-object.json#/properties/ip_version"
+						},
+						"update_cron": {
+							"$ref": "../../components/ddns-config-object.json#/properties/update_cron"
+						},
+						"enabled": {
+							"$ref": "../../components/ddns-config-object.json#/properties/enabled"
+						},
+						"config_json": {
+							"$ref": "../../components/ddns-config-object.json#/properties/config_json"
+						},
+						"meta": {
+							"$ref": "../../components/ddns-config-object.json#/properties/meta"
+						}
+					},
+					"example": {
+						"name": "Home DDNS",
+						"provider": "cloudflare",
+						"domain": "home.example.com",
+						"ip_version": "ipv4",
+						"update_cron": "@every 5m",
+						"enabled": true,
+						"config_json": {
+							"api_token": "your-cloudflare-token",
+							"zone_identifier": "your-zone-id",
+							"proxied": true,
+							"ttl": 1
+						}
+					}
+				}
+			}
+		}
+	},
+	"responses": {
+		"201": {
+			"description": "201 response",
+			"content": {
+				"application/json": {
+					"schema": {
+						"$ref": "../../components/ddns-config-object.json"
+					}
+				}
+			}
+		}
+	}
+}

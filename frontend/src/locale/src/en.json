@@ -176,7 +176,6 @@
 	"cloudflare-ddns.add": {
 		"defaultMessage": "Add DDNS Configuration"
 	},
-	/* ===== FORK START: cloudflare-ddns locale block (will be renamed to ddns-config) ===== */
 	"cloudflare-ddns.edit": {
 		"defaultMessage": "Edit DDNS Configuration"
 	},
@@ -351,7 +350,6 @@
 	"cloudflare-ddns.tab.advanced": {
 		"defaultMessage": "Advanced"
 	},
-	/* ===== FORK END: cloudflare-ddns locale block ===== */
 	"certificates": {
 		"defaultMessage": "Certificates"
 	},

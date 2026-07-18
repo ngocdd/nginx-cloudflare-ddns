@@ -37,9 +37,7 @@ const up = async (knex) => {
 
 	const existing = await knex("ddns_configs").count({ c: "*" }).first();
 	if (existing && Number(existing.c) > 0) {
-		logger.info(
-			`[${migrateName}] ddns_configs already has ${existing.c} row(s), skipping migration`,
-		);
+		logger.info(`[${migrateName}] ddns_configs already has ${existing.c} row(s), skipping migration`);
 		return;
 	}
 
@@ -61,12 +59,7 @@ const up = async (knex) => {
 		const ip4Domains = new Set(splitDomains(row.ip4_domains));
 		const ip6Domains = new Set(splitDomains(row.ip6_domains));
 
-		const allDomains = new Set([
-			...proxiedDomains,
-			...unproxiedDomains,
-			...ip4Domains,
-			...ip6Domains,
-		]);
+		const allDomains = new Set([...proxiedDomains, ...unproxiedDomains, ...ip4Domains, ...ip6Domains]);
 
 		// Build the provider-specific config block (Cloudflare keys).
 		const configJson = {
@@ -136,10 +129,7 @@ const down = async (knex) => {
 	// Only delete rows we created (provider='cloudflare' and not deleted).
 	// This is best-effort — operators who hand-created cloudflare rows in
 	// the new table will lose them on rollback.
-	const deleted = await knex("ddns_configs")
-		.where("provider", "cloudflare")
-		.where("is_deleted", 0)
-		.delete();
+	const deleted = await knex("ddns_configs").where("provider", "cloudflare").where("is_deleted", 0).delete();
 	logger.info(`[${migrateName}] Rolled back ${deleted} migrated row(s)`);
 };
 
