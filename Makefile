@@ -1,7 +1,7 @@
 # Nginx Proxy Manager with Cloudflare DDNS Integration
 # Makefile for building and managing the project
 
-.PHONY: help build build-dev push clean frontend backend install dev dev-stop test lint all release bump version up down restart logs ps pull config run run-stop run-logs run-status run-clean run-backend run-frontend run-devbe env-local setup-local sync-upstream sync-upstream-rebase sync-status sync-fork-boundaries check-fork-boundaries
+.PHONY: help build build-dev push push-harbor push-harbor-multiarch clean frontend backend install dev dev-stop test lint all release bump version up down restart logs ps pull config run run-stop run-logs run-status run-clean run-backend run-frontend run-devbe env-local setup-local sync-upstream sync-upstream-rebase sync-status sync-fork-boundaries check-fork-boundaries login login-harbor login-hub logout
 
 # Variables
 IMAGE_NAME ?= nginx-proxy-manager-ddns
@@ -12,6 +12,71 @@ BUILD_COMMIT ?= $(shell git log -n 1 --format=%h 2>/dev/null || echo "unknown")
 BUILD_DATE ?= $(shell date '+%Y-%m-%d %T %Z')
 PLATFORMS ?= linux/amd64
 BUILDX_NAME ?= npm-ddns
+
+# Harbor registry variables
+# Usage:
+#   make push-harbor                                              # dùng defaults
+#   make push-harbor IMAGE_TAG=v2.14.0                            # đổi tag
+#   make push-harbor SOURCE_IMAGE=my-image:custom                 # đổi source image
+#   make push-harbor HARBOR_REPOSITORY=other-repo IMAGE_TAG=v2.14.0
+HARBOR_REGISTRY   ?= harbor.ngocdd.io.vn
+HARBOR_PROJECT    ?= ngocdd
+HARBOR_REPOSITORY ?= nginx-ddns
+SOURCE_IMAGE      ?= $(IMAGE_NAME)
+
+# Registry login credentials. Set these in your shell env or CI secrets —
+# they are read by every `login*` target. Example (Linux/macOS):
+#   export DOCKER_USERNAME=ngocdd
+#   export DOCKER_PASSWORD=xxxxxxxxxxxxxxxx
+DOCKER_USERNAME ?=
+DOCKER_PASSWORD ?=
+
+# Default registry the generic `make login` target logs into. Override per
+# invocation, e.g. `make login REGISTRY=docker.io`.
+LOGIN_REGISTRY ?= $(HARBOR_REGISTRY)
+
+# ============================================================================
+# Registry login
+#
+# All push targets automatically depend on `login` (see below), so setting
+# DOCKER_USERNAME / DOCKER_PASSWORD in the environment is enough — no extra
+# `make login` invocation is required. To trigger login by hand:
+#
+#   make login                  # default registry = $(LOGIN_REGISTRY)
+#   make login REGISTRY=ghcr.io # custom registry
+#   make login-harbor           # alias for `make login`
+#   make login-hub              # alias for `make login REGISTRY=docker.io`
+#   make logout                 # log out from the default registry
+# ============================================================================
+
+# Common credential check + `docker login --password-stdin` helper.
+# Args: $1 = registry host
+define docker-login
+	@if [ -z "$(DOCKER_USERNAME)" ] || [ -z "$(DOCKER_PASSWORD)" ]; then \
+		echo "$(RED)✗ DOCKER_USERNAME and DOCKER_PASSWORD must be set in the environment$(RESET)" >&2; \
+		echo "$(YELLOW)  Example:$(RESET)" >&2; \
+		echo "$(YELLOW)    export DOCKER_USERNAME=ngocdd$(RESET)" >&2; \
+		echo "$(YELLOW)    export DOCKER_PASSWORD=********$(RESET)" >&2; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)❯ Logging in to $(YELLOW)$(1)$(BLUE) as $(YELLOW)$(DOCKER_USERNAME)$(RESET)"
+	@echo "$(DOCKER_PASSWORD)" | docker login $(1) -u "$(DOCKER_USERNAME)" --password-stdin
+	@echo "$(GREEN)✓ Logged in to $(1)$(RESET)"
+endef
+
+login: ## Login to $(LOGIN_REGISTRY) using $(DOCKER_USERNAME)/$(DOCKER_PASSWORD) env vars
+	$(call docker-login,$(LOGIN_REGISTRY))
+
+login-harbor: ## Login to Harbor (harbor.ngocdd.io.vn)
+	$(call docker-login,$(HARBOR_REGISTRY))
+
+login-hub: ## Login to Docker Hub (docker.io)
+	$(call docker-login,docker.io)
+
+logout: ## Logout from $(LOGIN_REGISTRY)
+	@echo "$(BLUE)❯ Logging out from $(YELLOW)$(LOGIN_REGISTRY)$(RESET)"
+	@docker logout $(LOGIN_REGISTRY)
+	@echo "$(GREEN)✓ Logged out from $(LOGIN_REGISTRY)$(RESET)"
 
 # Colors for output
 BLUE := \033[0;34m
@@ -78,7 +143,7 @@ build-multiarch: frontend ## Build Docker image for multiple architectures (amd6
 	docker buildx rm "$(BUILDX_NAME)" 2>/dev/null || true
 	@echo "$(GREEN)✓ Multiarch Docker image built$(RESET)"
 
-push: frontend ## Build and push Docker image to Docker Hub (ngocdd94/nginx-ddns)
+push: frontend login-hub ## Build and push Docker image to Docker Hub (ngocdd94/nginx-ddns)
 	@echo "$(BLUE)❯ Building and pushing: $(YELLOW)$(DOCKER_HUB_REPO):$(IMAGE_TAG)$(RESET)"
 	docker buildx rm "$(BUILDX_NAME)" 2>/dev/null || true
 	docker buildx create --name "$(BUILDX_NAME)" --use
@@ -96,11 +161,48 @@ push: frontend ## Build and push Docker image to Docker Hub (ngocdd94/nginx-ddns
 	docker buildx rm "$(BUILDX_NAME)" 2>/dev/null || true
 	@echo "$(GREEN)✓ Image pushed to $(DOCKER_HUB_REPO):$(IMAGE_TAG)$(RESET)"
 
-push-simple: ## Tag and push existing image to Docker Hub (single arch, faster)
+push-simple: login-hub ## Tag and push existing image to Docker Hub (single arch, faster)
 	@echo "$(BLUE)❯ Tagging and pushing: $(YELLOW)$(DOCKER_HUB_REPO):$(IMAGE_TAG)$(RESET)"
 	docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(DOCKER_HUB_REPO):$(IMAGE_TAG)
 	docker push $(DOCKER_HUB_REPO):$(IMAGE_TAG)
 	@echo "$(GREEN)✓ Image pushed to $(DOCKER_HUB_REPO):$(IMAGE_TAG)$(RESET)"
+
+# Tag một image đã có sẵn (SOURCE_IMAGE[:TAG]) rồi push lên Harbor.
+# Cú pháp tương đương:
+#   docker tag SOURCE_IMAGE[:TAG] harbor.ngocdd.io.vn/ngocdd/REPOSITORY[:TAG]
+#   docker push harbor.ngocdd.io.vn/ngocdd/REPOSITORY[:TAG]
+#
+# Ví dụ:
+#   make push-harbor                                              # tag $(IMAGE_NAME):$(IMAGE_TAG) -> harbor
+#   make push-harbor IMAGE_TAG=v2.14.0                            # đổi tag đích
+#   make push-harbor SOURCE_IMAGE=my-app:custom                   # đổi image nguồn
+#   make push-harbor HARBOR_REPOSITORY=other-repo                  # đổi tên repo ở Harbor
+#   make push-harbor SOURCE_IMAGE=my-app:custom HARBOR_REPOSITORY=other-repo IMAGE_TAG=v3.0.0
+push-harbor: login-harbor ## Tag existing image and push to Harbor (harbor.ngocdd.io.vn/ngocdd/REPOSITORY)
+	@echo "$(BLUE)❯ Tagging $(YELLOW)$(SOURCE_IMAGE):$(IMAGE_TAG)$(BLUE) -> $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG)$(RESET)"
+	docker tag $(SOURCE_IMAGE):$(IMAGE_TAG) $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG)
+	docker push $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG)
+	@echo "$(GREEN)✓ Image pushed to $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG)$(RESET)"
+
+# Build + push multiarch trực tiếp lên Harbor (bỏ qua build local).
+push-harbor-multiarch: frontend login-harbor ## Build multiarch image and push directly to Harbor
+	@echo "$(BLUE)❯ Building & pushing multiarch image to Harbor: $(YELLOW)$(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG)$(RESET)"
+	docker buildx rm "$(BUILDX_NAME)" 2>/dev/null || true
+	docker buildx create --name "$(BUILDX_NAME)" --use
+	docker buildx build \
+		--build-arg BUILD_VERSION="$(BUILD_VERSION)" \
+		--build-arg BUILD_COMMIT="$(BUILD_COMMIT)" \
+		--build-arg BUILD_DATE="$(BUILD_DATE)" \
+		--platform $(PLATFORMS) \
+		--progress plain \
+		--pull \
+		-f docker/Dockerfile \
+		-t $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG) \
+		-t $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(BUILD_VERSION) \
+		--push \
+		.
+	docker buildx rm "$(BUILDX_NAME)" 2>/dev/null || true
+	@echo "$(GREEN)✓ Multiarch image pushed to $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG)$(RESET)"
 
 # ============================================================================
 # Docker Run
@@ -255,17 +357,22 @@ release: bump
 build-local: install frontend ## Install deps, build FE+BE, build Docker image for current platform
 	@echo "$(GREEN)✓ Local build complete: $(IMAGE_NAME):$(IMAGE_TAG)$(RESET)"
 
-all: ## Full pipeline: install deps, build FE+BE, build multiarch image, push to registry
+all: login-harbor ## Full pipeline: install deps, build FE+BE, build multiarch image, push to Harbor
 	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)"
-	@echo "$(BLUE)  Full build & push pipeline$(RESET)"
-	@echo "$(BLUE)  Image : $(YELLOW)$(DOCKER_HUB_REPO):$(IMAGE_TAG)$(RESET)"
+	@echo "$(BLUE)  Full build & push pipeline (Harbor)$(RESET)"
+	@echo "$(BLUE)  Image : $(YELLOW)$(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG)$(RESET)"
 	@echo "$(BLUE)  Platforms : $(YELLOW)$(PLATFORMS)$(RESET)"
 	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)"
 	@$(MAKE) install
 	@$(MAKE) frontend
-	@echo "$(BLUE)❯ Building and pushing multiarch image to registry...$(RESET)"
+	@echo "$(BLUE)❯ Building image with buildx and loading into local Docker...$(RESET)"
 	docker buildx rm "$(BUILDX_NAME)" 2>/dev/null || true
 	docker buildx create --name "$(BUILDX_NAME)" --use
+	# Build + load image into the local Docker daemon so the subsequent
+	# `docker push` step uses the credentials from ~/.docker/config.json
+	# directly (buildx's --push path has been observed to bypass the host
+	# credential store and hit Harbor with 401). --load requires a single
+	# target platform, which matches the default PLATFORMS=linux/amd64.
 	docker buildx build \
 		--build-arg BUILD_VERSION="$(BUILD_VERSION)" \
 		--build-arg BUILD_COMMIT="$(BUILD_COMMIT)" \
@@ -274,15 +381,18 @@ all: ## Full pipeline: install deps, build FE+BE, build multiarch image, push to
 		--progress plain \
 		--pull \
 		-f docker/Dockerfile \
-		-t $(DOCKER_HUB_REPO):$(IMAGE_TAG) \
-		-t $(DOCKER_HUB_REPO):$(BUILD_VERSION) \
-		--push \
+		-t $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG) \
+		--load \
 		.
 	docker buildx rm "$(BUILDX_NAME)" 2>/dev/null || true
+	@echo "$(BLUE)❯ Tagging additional version and pushing to Harbor...$(RESET)"
+	docker tag $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG) $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(BUILD_VERSION)
+	docker push $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG)
+	docker push $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(BUILD_VERSION)
 	@echo "$(GREEN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)"
 	@echo "$(GREEN)✓ Pipeline complete!$(RESET)"
-	@echo "$(GREEN)  Pushed $(DOCKER_HUB_REPO):$(IMAGE_TAG)$(RESET)"
-	@echo "$(GREEN)  Pushed $(DOCKER_HUB_REPO):$(BUILD_VERSION)$(RESET)"
+	@echo "$(GREEN)  Pushed $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(IMAGE_TAG)$(RESET)"
+	@echo "$(GREEN)  Pushed $(HARBOR_REGISTRY)/$(HARBOR_PROJECT)/$(HARBOR_REPOSITORY):$(BUILD_VERSION)$(RESET)"
 	@echo "$(GREEN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)"
 
 # ============================================================================

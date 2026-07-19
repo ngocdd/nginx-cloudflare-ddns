@@ -42,7 +42,8 @@ RUN /tmp/install-s6 "${TARGETPLATFORM}" && rm -f /tmp/install-s6
 
 # ===== FORK START: ddns binary =====
 # ddns-updater binary (from official Docker image)
-COPY --from=ddns-updater /usr/bin/ddns-updater /usr/local/bin/ddns-updater
+# Upstream image now ships the binary at /updater/ddns-updater (used to be /usr/bin/ddns-updater).
+COPY --from=ddns-updater /updater/ddns-updater /usr/local/bin/ddns-updater
 # ===== FORK END =====
 
 EXPOSE 80 81 443
